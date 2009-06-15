@@ -15,7 +15,7 @@
    snap snap* segment filled-rectangle circle-path filled-circle
    text-with-extents text x-bearing y-bearing x-advance y-advance
    add-text-extents measure-labels capital-letter-height aligned-text 
-   aligned-text-rectangle calculate-function
+   aligned-text-rectangle
 
    ;; interval
 
@@ -23,7 +23,7 @@
    positive-interval-p negative-interval-p weakly-positive-interval-p
    weakly-negative-interval-p zero-interval-p flip-interval
    interval-of interval-intersection fraction fractions percent
-   percents spacer spacers split-interval
+   percents spacer spacers split-interval calculate-function
 
    ;; contexts
    
@@ -77,10 +77,10 @@
    ;; plot
 
    draw-line draw-horizontal-line draw-vertical-line draw-lines
-   draw-filled-rectangle draw-function draw-histogram 
+   draw-sequence draw-filled-rectangle draw-function draw-histogram
    plot-simple plot-two-sided plot-lines plot-lines-two-sided
    plot-function plot-sequence plot-image plot-histogram
-   draw-aligned-text draw-polygon  draw-symbol draw-symbols
+   draw-aligned-text draw-polygon draw-symbol draw-symbols
    
    ))
 

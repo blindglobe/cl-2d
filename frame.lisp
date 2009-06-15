@@ -120,13 +120,13 @@ returned as a list."
 accommodating lines with the given width."
   (let ((half-width (/ line-width 2)))
     (with-slots (horizontal-interval vertical-interval context) frame
-      (reset-clip context)
-      (rectangle context
-		 (- (left horizontal-interval) half-width)
-		 (- (right vertical-interval) half-width)
-		 (+ line-width (width horizontal-interval))
-		 (+ line-width (width vertical-interval)))
-      (clip context))))
+      (with-context (context)
+	(reset-clip)
+	(rectangle (- (left horizontal-interval) half-width)
+		   (- (right vertical-interval) half-width)
+		   (+ line-width (width horizontal-interval))
+		   (+ line-width (width vertical-interval)))
+	(clip)))))
 
 (defmacro with-clip-to-frame ((frame &optional (line-width 0)) &body body)
   "Execute body with clipping to frame, resetting clip afterwards.
@@ -148,11 +148,12 @@ Protected from nonlocal exits."
 (defmethod fill-with-color ((frame frame) color)
   (with-slots (horizontal-interval vertical-interval context) frame
 ;;    (reset-clip context)
-    (filled-rectangle context color
+    (filled-rectangle color
 		      (left horizontal-interval)
 		      (right vertical-interval)
 		      (right horizontal-interval)
-		      (left vertical-interval))))
+		      (left vertical-interval)
+		      context)))
 
 (defun clear (frame)
   "Fills frame with its background-color.  Doesn't make much sense for

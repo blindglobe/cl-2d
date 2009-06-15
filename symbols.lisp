@@ -10,31 +10,34 @@
 ;;;;  of an edge othe square that would contain the symbol, which is
 ;;;;  drawn with color in context.
 
-(defun symbol-filled-circle (context x y size color)
+(defun symbol-filled-circle (x y size color &optional (context *context*))
   "Filled circle symbol."
   (let ((radius (half size)))
-    (filled-circle context x y radius color)))
+    (filled-circle x y radius color context)))
 
-(defun symbol-filled-square (context x y size color)
+(defun symbol-filled-square (x y size color &optional (context *context*))
   "Filled square symbol."
   (let ((halfsize (half size)))
-    (rectangle context (- x halfsize) (- y halfsize) size size)
-    (set-source-color context color)
-    (fill-path context)))
-
-(defun symbol-hollow-circle (context x y size color)
+    (with-context (context)
+      (rectangle (- x halfsize) (- y halfsize) size size)
+      (set-source-color color)
+      (fill-path))))
+  
+(defun symbol-hollow-circle (x y size color &optional (context *context*))
   "Hollow circle symbol."
   (let ((radius (half size)))
-    (circle-path context x y radius)
-    (set-source-color context color)
-    (stroke context)))
+    (with-context (context)
+      (circle-path x y radius)
+      (set-source-color color)
+      (stroke))))
 
-(defun symbol-hollow-square (context x y size color)
+(defun symbol-hollow-square (x y size color &optional (context *context*))
   "Hollow square symbol."
   (let ((halfsize (half size)))
-    (rectangle context (- x halfsize) (- y halfsize) size size)
-    (set-source-color context color)
-    (stroke context)))
+    (with-context (context)
+      (rectangle (- x halfsize) (- y halfsize) size size)
+      (set-source-color color)
+      (stroke))))
 
 ;;;;
 ;;;;  functions that assign a size or a color to a particular weight

@@ -187,29 +187,25 @@ horizontal, vertical")))
 (defparameter *default-horizontal-legend-style* 
   (make-instance 'horizontal-legend-style))
 
-(defgeneric set-style (context style))
+(defgeneric set-style (style &optional context))
 
-(defmethod set-style (context (style font-style))
+(defmethod set-style ((style font-style) &optional (context *context*))
   "Set the font style from the given style."
   (with-slots (name slant weight size color) style
-    (select-font-face context name slant weight)
-    (set-font-size context size)
-    (set-source-color context color)))
+    (with-context (context)
+      (select-font-face name slant weight)
+      (set-font-size size)
+      (set-source-color color))))
 
-(defun font-style-em (context style)
-  "Get the with of the letter m in a given font-style."
-  (set-style context style)
-  ;; extract width
-  (nth-value 2 (text-extents context "m")))
-
-(defmethod set-style (context (style dash-style))
+(defmethod set-style ((style dash-style) &optional (context *context*))
   "Set the dash style from the given style."
   (with-slots (offset dashes) style
-    (set-dash context offset dashes)))
+    (set-dash offset dashes context)))
 
-(defmethod set-style (context (style line-style))
+(defmethod set-style ((style line-style) &optional (context *context*))
   "Set the line style from the given style."
   (with-slots (width color dash-style) style
-    (set-source-color context color)
-    (set-line-width context width)
-    (set-style context dash-style)))
+    (with-context (context)
+      (set-source-color color)
+      (set-line-width width)
+      (set-style dash-style))))

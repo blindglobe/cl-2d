@@ -15,18 +15,19 @@
 			  (padding 2))
   "Draw aligned text at given coordinates."
   (with-slots (x-mapping y-mapping context) drawing-area
-    (set-style font-style context)
-    (let ((text-with-extents (add-text-extents context text))
-	  (x (map-coordinate x-mapping x))
-	  (y (map-coordinate y-mapping y)))
-      (when fill-color
-	(aligned-text-rectangle context x y text-with-extents fill-color
-				:x-align x-align :y-align y-align :angle angle
-				:padding padding)
-	;; need to reset color
-	(set-source-color context (slot-value font-style 'color)))
-      (aligned-text context x y text-with-extents
-		    :x-align x-align :y-align y-align :angle angle))))
+    (with-context (context)
+      (set-style font-style)
+      (let ((text-with-extents (add-text-extents text))
+	    (x (map-coordinate x-mapping x))
+	    (y (map-coordinate y-mapping y)))
+	(when fill-color
+	  (aligned-text-rectangle x y text-with-extents fill-color
+				  :x-align x-align :y-align y-align :angle angle
+				  :padding padding)
+	  ;; need to reset color
+	  (set-source-color (slot-value font-style 'color)))
+	(aligned-text x y text-with-extents
+		      :x-align x-align :y-align y-align :angle angle)))))
 
 (defun draw-polygon (drawing-area vertices &key (fill-color +white+)
 		     (line-style nil))
@@ -35,39 +36,39 @@ is nil, the polygon will not be outlined or filled, respectively.
 Vertices is either a list of (x y) lists, eg '((1 2) (3 4) (7 9)).
 The path is closed at the end.  No sanity checks are performed."
   (with-slots (x-mapping y-mapping context) drawing-area
-    (flet ((path ()
-	     (iter
-	       (for (x y) :in vertices)
-	       (for x-c := (map-coordinate x-mapping x))
-	       (for y-c := (map-coordinate y-mapping y))
-	       (if (first-iteration-p)
-		   (move-to context x-c y-c)
-		   (line-to context x-c y-c)))
-	     (close-path context)))
-      (when fill-color
-	(set-source-color context fill-color)
-	(path)
-	(fill-path context))
-      (when line-style
-	(set-style context line-style)
-	(path)
-	(stroke context)))))
+    (with-context (context)
+      (flet ((path ()
+	       (iter
+		 (for (x y) :in vertices)
+		 (for x-c := (map-coordinate x-mapping x))
+		 (for y-c := (map-coordinate y-mapping y))
+		 (if (first-iteration-p)
+		     (move-to x-c y-c)
+		     (line-to x-c y-c)))
+	       (close-path)))
+	(when fill-color
+	  (set-source-color fill-color)
+	  (path)
+	  (fill-path))
+	(when line-style
+	  (set-style line-style)
+	  (path)
+	  (stroke))))))
 
 (defun draw-line (drawing-area x-start y-start x-end y-end
 		  &optional (line-style *default-line-style*))
   "Draw a line segment between the given coordinates."
   (with-clip-to-frame (drawing-area (width line-style))
     (with-slots (context x-mapping y-mapping) drawing-area
-      (with-sync-lock (context)
-	(set-style context line-style)
-	(move-to context
-		 (map-coordinate x-mapping x-start)
-		 (map-coordinate y-mapping y-start))
-	(line-to context
-		 (map-coordinate x-mapping x-end)
-		 (map-coordinate y-mapping y-end))
-	(stroke context))))
-  (values))
+      (with-context (context)
+	(with-sync-lock (context)
+	  (set-style line-style)
+	  (move-to (map-coordinate x-mapping x-start)
+		   (map-coordinate y-mapping y-start))
+	  (line-to (map-coordinate x-mapping x-end)
+		   (map-coordinate y-mapping y-end))
+	  (stroke))))
+    (values)))
 
 (defun draw-horizontal-line (drawing-area y &optional 
 			     (line-style *default-line-style*))
@@ -95,58 +96,69 @@ The path is not closed.  If nil is found in the ys, the line is broken
 there."
   (with-clip-to-frame (drawing-area (width line-style))
     (with-slots (context x-mapping y-mapping) drawing-area
-      (with-sync-lock (context)
-	(set-style context line-style)
-	(iter
-	  (with drawing-line-p := nil)
-	  (for x :in-vector xs)
-	  (for y :in-vector ys)
-	  (for x-d := (map-coordinate x-mapping x))
-	  (for y-d := (if y (map-coordinate y-mapping y) nil))
-	  (cond
-	    ((and (not drawing-line-p) y-d)
-	     (move-to context x-d y-d)
+      (with-context (context)
+	(with-sync-lock (context)
+	  (set-style line-style)
+	  (iter
+	    (with drawing-line-p := nil)
+	    (for x :in-vector xs)
+	    (for y :in-vector ys)
+	    (for x-d := (map-coordinate x-mapping x))
+	    (for y-d := (if y (map-coordinate y-mapping y) nil))
+	    (cond
+	      ((and (not drawing-line-p) y-d)
+	       (move-to x-d y-d)
 	     (setf drawing-line-p t))
 	    ((and drawing-line-p y-d)
-	     (line-to context x-d y-d))
+	     (line-to x-d y-d))
 	    ((and drawing-line-p (not y-d))
-	     (stroke context)
+	     (stroke)
 	     (setf drawing-line-p nil)))
 	  (finally
 	   (when drawing-line-p
-	     (stroke context)))))))
-  (values))
+	     (stroke)))))))
+  (values)))
+
+
+(defun draw-sequence (drawing-area sequence &optional 
+		      (line-style *default-line-style*))
+  "Draw a sequence, ie values mapped to 0, 1, 2, ..."
+  (let* ((vector (coerce sequence 'vector))
+	 (length (length vector)))
+  (draw-lines drawing-area (num-sequence :from 0 :by 1 :length  length) vector
+	      line-style)))
 
 (defun draw-filled-rectangle (drawing-area x1 y1 x2 y2 fill-color 
 			      &optional (snap-mode :none))
   "Draw a rectangle with the given fill color and coordinates."
   (with-slots (context x-mapping y-mapping) drawing-area
-    (let ((x1 (map-coordinate x-mapping x1 snap-mode))
-	  (x2 (map-coordinate x-mapping x2 snap-mode))
-	  (y1 (map-coordinate y-mapping y1 snap-mode))
-	  (y2 (map-coordinate y-mapping y2 snap-mode)))
-      (move-to context x1 y1)
-      (line-to context x1 y2)
-      (line-to context x2 y2)
-      (line-to context x2 y1)
-      (close-path context)
-      (set-source-color context fill-color)
-      (fill-path context)))
-  (values))
+    (with-context (context)
+      (let ((x1 (map-coordinate x-mapping x1 snap-mode))
+	    (x2 (map-coordinate x-mapping x2 snap-mode))
+	    (y1 (map-coordinate y-mapping y1 snap-mode))
+	    (y2 (map-coordinate y-mapping y2 snap-mode)))
+	(move-to x1 y1)
+	(line-to x1 y2)
+	(line-to x2 y2)
+	(line-to x2 y1)
+	(close-path)
+	(set-source-color fill-color)
+	(fill-path)))
+    (values)))
 
 (defun draw-symbol (drawing-area x y size color symbol-drawing-function)
   "Draw a symbol (using given symbol-drawing-function) at (x,y), with
 given size and color."
   (clip-to-frame drawing-area)
   (with-slots (x-mapping y-mapping context) drawing-area
-    (with-sync-lock (context)
-      (funcall symbol-drawing-function
-	       context
-	       (map-coordinate x-mapping x)
-	       (map-coordinate y-mapping y)
-	       size 
-	       color))
-    (reset-clip context)))
+    (with-context (context)
+      (with-sync-lock (context)
+	(funcall symbol-drawing-function
+		 (map-coordinate x-mapping x)
+		 (map-coordinate y-mapping y)
+		 size 
+		 color))
+      (reset-clip))))
 
 (defun draw-symbols (drawing-area xs ys &key
 		    (weights nil)
@@ -161,18 +173,18 @@ given, 1 is used instead."
   (assert (= (length xs) (length ys)))
   (clip-to-frame drawing-area)
   (with-slots (x-mapping y-mapping context) drawing-area
-    (with-sync-lock (context)
+    (with-context (context)
+      (with-sync-lock (context)
 	(dotimes (i (length xs))
 	  (let ((weight (if weights
 			    (aref weights i)
 			    1)))
 	    (funcall symbol-drawing-function
-		     context
 		     (map-coordinate x-mapping (aref xs i))
 		     (map-coordinate y-mapping (aref ys i))
 		     (funcall size-function weight)
 		     (funcall color-function weight)))))
-      (reset-clip context)))
+    (reset-clip))))
 
 (defun draw-function (drawing-area function &key
 		      (x-interval (domain (x-mapping drawing-area)))
@@ -363,11 +375,11 @@ intepretation of ignorable-conditions, see calculate-function."
 		      (simple-plot-style *default-simple-plot-style*)
 		      (line-style *default-line-style*)
 		      (x-title "N") (y-title "sequence"))
-  "Plot a sequence, ie a set of function values mapped to 1, 2, ..."
+  "Plot a sequence, ie values mapped to 0, 1, 2, ..."
   (let* ((vector (coerce sequence 'vector))
 	 (length (length vector)))
-    (plot-lines frame (num-sequence :from 1 :by 1 :length length) vector
-		:x-interval (make-interval 1 length) :y-interval y-interval
+    (plot-lines frame (num-sequence :from 0 :by 1 :length length) vector
+		:x-interval (make-interval 0 (1- length)) :y-interval y-interval
 		:simple-plot-style simple-plot-style
 		:line-style line-style :x-title x-title
 		:y-title y-title)))
@@ -429,9 +441,8 @@ restricted to interval."
 		      (x2 (aref x-boundaries (1+ i)))
 		      (y2 (aref y-boundaries (1+ j))))
 		  (when (and (< x1 x2) (> y1 y2))
-		    (filled-rectangle context
-		     (funcall color-function (aref z i j))
-		     x1 y1 x2 y2))))))))
+		    (filled-rectangle (funcall color-function (aref z i j))
+				      x1 y1 x2 y2 context))))))))
       ;; draw legend
       (image-legend legend-frame color-mapping
 		    :image-legend-style image-legend-style :z-title z-title)

@@ -217,3 +217,31 @@ nil, (vector interval) is returned."
 		       (prog1 (make-interval left right)
 			 (setf left right))))
 	   subdivisions))))
+
+;;;; auxiliary functions
+;;;;
+
+(defun calculate-function (function domain number-of-points
+			   ignorable-conditions)
+  "Calculate function at number-of-points points on domain.  If a
+member of ignorable-conditions is encountered, the condition is
+handled and the value is nil.  Return (values xs fxs)."
+  (assert (>= number-of-points 2))
+  (let ((xs (num-sequence :from (left domain)
+			  :to (right domain)
+			  :length number-of-points))
+	(fxs (make-array (1+ number-of-points)))
+	(caught-condition-p nil))
+    (iter
+      (for i :from 0)
+      (for x :in-vector xs)
+      (for fx := (handler-case (funcall function x)
+		   (t (condition)
+		     (if (member condition ignorable-conditions
+				 :test (function typep))
+			 nil
+			 (error condition)))))
+      (setf (aref fxs i) fx)
+      (unless fx
+	(setf caught-condition-p t)))
+    (values xs fxs)))

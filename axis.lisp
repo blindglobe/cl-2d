@@ -1,6 +1,6 @@
 (in-package :cl-2d)
 
-(declaim (optimize (debug 3)))
+;;;(declaim (optimize (debug 3)))
 
 ;;;;  Axis
 ;;;;
@@ -162,8 +162,9 @@ are maximum character widths/heights (all 3 in the same units)."
     (perpendicular (values 0 0 0.5))
     (perpendicular-opposite (values pi 1 0.5))))
 
-(defun axis-primitive (context width height axis axis-style
-		       label-orientation reverse-title-p)
+(defun axis-primitive (width height axis axis-style
+		       label-orientation reverse-title-p 
+		       &optional (context *context*))
   "This is a generalized axis drawing function, not to be called
 directly in normal cases.  It draws a vertical right axis in
 context to fill width and height, starting from (0,0).
@@ -178,7 +179,7 @@ Suggested use: set up a rotation and translation using cairo to
 position this axis in the appropriate place.  Do not use scaling,
 it will mess up line and font widths."
   (if (typep axis 'standard-axis)
-      (bind (((values nil nil char-width char-height) (text-extents context "0")))
+      (bind (((values nil nil char-width char-height) (text-extents "0" context)))
 	(setf axis
 	      (expand-standard-axis
 	       axis height char-width char-height
@@ -188,79 +189,86 @@ it will mess up line and font widths."
     (with-slots (axis-padding font-style line-style tick-length tick-padding
 			      title-padding) axis-style
       (with-sync-lock (context)
-	;; axis line
-	(set-style context line-style)
-	(set-style context font-style)
-	(segment context axis-padding 0 axis-padding height)
-	;; axis tickmarks and labels
-	(bind (((values interval title-y-align title-angle) 
-		(if reverse-title-p
-		    (values (flip-interval interval) 0 (/ pi 2))
-		    (values interval 1 (/ pi -2))))
-	       (mapping (make-instance 'linear-mapping
-				       :domain interval
-				       :range (make-interval height 0) :snap-p nil))
-	       ((values angle x-align y-align)
-		(calculate-label-alignment label-orientation))
-	       (tick-start axis-padding)
-	       (tick-end (+ tick-start tick-length))
-	       (label-x (+ tick-end tick-padding)))
-	  (iter
-	    (for label in labels)
-	    (for position :in-vector positions)
-	    (for y := (map-coordinate mapping position))
-	    (segment context tick-start y tick-end y)
-	    (aligned-text context label-x y label
-			  :x-align x-align :y-align y-align
-			  :angle angle))
-	  ;; draw axis title
-	  (aligned-text context (- width title-padding) (/ height 2) title
-			:y-align title-y-align
-			:angle title-angle))))))
+	(with-context (context)
+	  ;; axis line
+	  (set-style line-style)
+	  (set-style font-style)
+	  (segment axis-padding 0 axis-padding height)
+	  ;; axis tickmarks and labels
+	  (bind (((values interval title-y-align title-angle) 
+		  (if reverse-title-p
+		      (values (flip-interval interval) 0 (/ pi 2))
+		      (values interval 1 (/ pi -2))))
+		 (mapping (make-instance 'linear-mapping
+					 :domain interval
+					 :range (make-interval height 0)
+					 :snap-p nil))
+		 ((values angle x-align y-align)
+		  (calculate-label-alignment label-orientation))
+		 (tick-start axis-padding)
+		 (tick-end (+ tick-start tick-length))
+		 (label-x (+ tick-end tick-padding)))
+	    (iter
+	      (for label in labels)
+	      (for position :in-vector positions)
+	      (for y := (map-coordinate mapping position))
+	      (segment tick-start y tick-end y)
+	      (aligned-text label-x y label
+			    :x-align x-align :y-align y-align
+			    :angle angle))
+	    ;; draw axis title
+	    (aligned-text (- width title-padding) (/ height 2) title
+			  :y-align title-y-align
+			  :angle title-angle)))))))
 
 (defun right-axis (frame axis &optional (axis-style *default-axis-style*))
   "Draw axis as a right axis in frame with given style."
   (with-slots (horizontal-interval vertical-interval context) frame
-    (translate context (left horizontal-interval) (right vertical-interval))
-    (axis-primitive context (width frame) (height frame) axis axis-style
-		    (ecase (label-orientation axis-style)
-		      ((horizontal perpendicular) 'perpendicular)
-		      ((vertical parallel) 'parallel))
-		    nil)
-    (reset-trans-matrix context)))
+    (with-context (context)
+      (translate (left horizontal-interval) (right vertical-interval))
+      (axis-primitive (width frame) (height frame) axis axis-style
+		      (ecase (label-orientation axis-style)
+			((horizontal perpendicular) 'perpendicular)
+			((vertical parallel) 'parallel))
+		      nil)
+      (reset-trans-matrix))))
       
 (defun left-axis (frame axis &optional (axis-style *default-axis-style*))
   "Draw axis as a left axis in frame with given style."
   (with-slots (horizontal-interval vertical-interval context) frame
-    (translate context (right horizontal-interval) (left vertical-interval))
-    (rotate context pi)
-    (axis-primitive context (width frame) (height frame) axis axis-style
-		     (ecase (label-orientation axis-style)
-		       ((horizontal perpendicular) 'perpendicular-opposite)
-		       ((vertical parallel) 'parallel-opposite))
-		     t)
-    (reset-trans-matrix context)))
+    (with-context (context)
+      (translate (right horizontal-interval) (left vertical-interval))
+      (rotate pi)
+      (axis-primitive (width frame) (height frame) axis axis-style
+		      (ecase (label-orientation axis-style)
+			((horizontal perpendicular) 'perpendicular-opposite)
+			((vertical parallel) 'parallel-opposite))
+		      t)
+      (reset-trans-matrix))))
 
 (defun top-axis (frame axis &optional (axis-style *default-axis-style*))
   "Draw axis as a top axis in frame with given style."
-  (with-slots (horizontal-interval vertical-interval  context) frame
-    (translate context (left horizontal-interval) (left vertical-interval))
-    (rotate context (/ pi -2))
-    (axis-primitive context (height frame) (width frame) axis axis-style
-		    (ecase (label-orientation axis-style)
-		      ((horizontal parallel) 'parallel-opposite)
-		      ((vertical perpendicular) 'perpendicular-opposite))
-		    t)
-    (reset-trans-matrix context)))
+  (with-slots (horizontal-interval vertical-interval context) frame
+    (with-context (context)
+      (translate (left horizontal-interval) (left vertical-interval))
+      (rotate (/ pi -2))
+      (axis-primitive (height frame) (width frame) axis axis-style
+		      (ecase (label-orientation axis-style)
+			((horizontal parallel) 'parallel-opposite)
+			((vertical perpendicular) 'perpendicular-opposite))
+		      t)
+      (reset-trans-matrix))))
 
 (defun bottom-axis (frame axis &optional (axis-style *default-axis-style*))
   "Draw axis as a bottom axis in frame with given style."
   (with-slots (horizontal-interval vertical-interval context) frame
-    (translate context (right horizontal-interval) (right vertical-interval))
-    (rotate context (/ pi 2))
-    (axis-primitive context (height frame) (width frame) axis axis-style
-		    (ecase (label-orientation axis-style)
-		      ((horizontal parallel) 'parallel)
-		      ((vertical perpendicular) 'perpendicular))
-		    nil)
-    (reset-trans-matrix context)))
+    (with-context (context)
+      (translate (right horizontal-interval) (right vertical-interval))
+      (rotate (/ pi 2))
+      (axis-primitive (height frame) (width frame) axis axis-style
+		      (ecase (label-orientation axis-style)
+			((horizontal parallel) 'parallel)
+			((vertical perpendicular) 'perpendicular))
+		      nil)
+      (reset-trans-matrix))))
+  
