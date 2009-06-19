@@ -94,7 +94,7 @@ format-axis-positions.  For round-to, see pretty-axis-positions."
   (assert (plusp initial-n))
   (iter
     (for n :from initial-n :downto 1)
-    (bind (((values positions exponent)
+    (bind (((:values positions exponent)
 	    (pretty-axis-positions lower upper n :round-to round-to))
 	   (labels (format-axis-positions positions exponent
 					  :max-exponent max-exponent
@@ -125,10 +125,10 @@ are maximum character widths/heights (all 3 in the same units)."
 	   'axis :interval interval :positions (vector left)
 	   :labels (list (format nil "~f" left)) :title title)
 	  (bind ((effective-size (* density max-size))
-		 ((values positions labels)
+		 ((:values positions labels)
 		  (if perpendicular-labels-p
 		      ;; perpendicular labels, can calculate total number
-		      (bind (((values positions exponent)
+		      (bind (((:values positions exponent)
 			      (pretty-axis-positions left right 
 			       (max 1
 				    (floor
@@ -179,7 +179,7 @@ Suggested use: set up a rotation and translation using cairo to
 position this axis in the appropriate place.  Do not use scaling,
 it will mess up line and font widths."
   (if (typep axis 'standard-axis)
-      (bind (((values nil nil char-width char-height) (text-extents "0" context)))
+      (bind (((:values nil nil char-width char-height) (text-extents "0" context)))
 	(setf axis
 	      (expand-standard-axis
 	       axis height char-width char-height
@@ -195,7 +195,7 @@ it will mess up line and font widths."
 	  (set-style font-style)
 	  (segment axis-padding 0 axis-padding height)
 	  ;; axis tickmarks and labels
-	  (bind (((values interval title-y-align title-angle) 
+	  (bind (((:values interval title-y-align title-angle) 
 		  (if reverse-title-p
 		      (values (flip-interval interval) 0 (/ pi 2))
 		      (values interval 1 (/ pi -2))))
@@ -203,7 +203,7 @@ it will mess up line and font widths."
 					 :domain interval
 					 :range (make-interval height 0)
 					 :snap-p nil))
-		 ((values angle x-align y-align)
+		 ((:values angle x-align y-align)
 		  (calculate-label-alignment label-orientation))
 		 (tick-start axis-padding)
 		 (tick-end (+ tick-start tick-length))
