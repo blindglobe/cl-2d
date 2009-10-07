@@ -97,10 +97,11 @@ minimum and maximum (nil if not constrained)."))
   "Pick the best fitting autoaxis.  Mark style needs to be set on
 context.  Extent is :width or :height."
   ;; if the domain is very narrow, just return a single mark
-  (let ((domain (domain mapping)))
-    (when (<= (/ (width domain)
-		 (max (left domain) (right domain)))
-	      1e-10)			; !!! ? relative precision
+  (let* ((domain (domain mapping))
+         (width (width domain)))
+    (when (or (zerop width) (<= (/ (width domain)
+                                   (max (abs (left domain)) (abs (right domain))))
+                                1e-10)) ; !!! ? relative precision
       (let ((left (left domain)))
 	(return-from autoaxis-pick-best
 	  (make-instance 'axis :positions (list left)

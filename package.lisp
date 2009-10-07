@@ -79,7 +79,7 @@
    draw-line draw-horizontal-line draw-vertical-line draw-lines
    draw-sequence draw-filled-rectangle draw-function draw-histogram
    plot-simple plot-two-sided plot-lines plot-lines-two-sided
-   plot-function plot-sequence plot-image plot-histogram
+   plot-symbols plot-function plot-sequence plot-image plot-histogram
    draw-aligned-text draw-polygon draw-symbol draw-symbols
    
    ))

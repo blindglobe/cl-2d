@@ -371,6 +371,30 @@ in a list."
     (draw-lines da1 xs y1s line-style1)
     (draw-lines da2 xs y2s line-style2)
     (list da1 da2)))
+
+(defun plot-symbols (frame xs ys &key
+                     (x-interval (interval-of xs))
+                     (y-interval (interval-of ys))
+                     (x-title "x") (y-title "y")
+                     (x-mapping-type 'linear-mapping)
+                     (y-mapping-type 'linear-mapping)
+                     (x-axis t)
+                     (y-axis t)
+                     (simple-plot-style *default-simple-plot-style*)
+                     (weights nil)
+                     (symbol-drawing-function #'symbol-hollow-circle)
+                     (size-function (proportional-size 4))
+                     (color-function (constantly +black+)))
+  (let ((drawing-area (plot-simple frame x-interval y-interval
+				   :x-title x-title 
+				   :y-title y-title
+				   :simple-plot-style simple-plot-style
+				   :x-mapping-type x-mapping-type
+				   :y-mapping-type y-mapping-type :x-axis x-axis
+				   :y-axis y-axis)))
+    (draw-symbols drawing-area xs ys :weights weights
+                  :symbol-drawing-function symbol-drawing-function :size-function size-function
+                  :color-function color-function)))
   
 (defun plot-function (frame function x-interval &key
 		      (y-interval #'interval-of)
