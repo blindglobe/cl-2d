@@ -1,6 +1,6 @@
 (in-package :cl-2d)
 
-(declaim (optimize debug))
+(declaim (optimize (debug 3) (speed 0)))
 
 ;;;;  Axis
 ;;;;
@@ -37,7 +37,8 @@
 ;;;;  autoaxis-guess-index and autoaxis-generate, which should
 ;;;;  specialize on mapping and axis types.  The density of marks is
 ;;;;  indexed by an integer: the first function provides a "good"
-;;;;  guess, while the second one generates the marks for a particular
+;;;;  guess and the allowed minimum and maximum (if any, otherwise
+;;;;  nil), while the second one generates the marks for a particular
 ;;;;  integer.  The axis generation mechanism simply explores the
 ;;;;  vicinity (see *autoaxis-exploration*) and pick the best axis.
 
@@ -71,10 +72,14 @@
 	  (when pos-p
 	    (let* ((difference (abs (- pos pos-p)))
 		   (overlap (- (/ (+ width width-p) 2) difference)))
+              ;; (format t "pos=~a  pos-p=~a  width=~a  width-p=~a  diff=~a  overlap=~a~% "
+              ;;         pos pos-p width width-p difference overlap)
 	      (maximizing overlap)))))))
 	     
 (defgeneric autoaxis-guess-index (mapping autoaxis)
-  (:documentation "A guess for the density index (an integer)."))
+  (:documentation "A guess for the density index (an integer).
+Return (values guess min max), where the latter two are the allowed
+minimum and maximum (nil if not constrained)."))
 
 (defgeneric autoaxis-generate (mapping autoaxis index)
   (:documentation "Generate axis automatically, using mapping and the
@@ -83,11 +88,12 @@
 (defparameter *autoaxis-exploration* 5
   "explore this many indices in both directions")
 
-(defparameter *autoaxis-minimum-mark-distance* 2
+(defparameter *autoaxis-minimum-text-distance* 1
   "minimum mark distance in capital letter height (see capital-letter-height)")
 
 (defun autoaxis-pick-best (mapping autoaxis extent &optional
 			   (context *context*))
+  (declare (optimize debug))
   "Pick the best fitting autoaxis.  Mark style needs to be set on
 context.  Extent is :width or :height."
   ;; if the domain is very narrow, just return a single mark
@@ -100,19 +106,26 @@ context.  Extent is :width or :height."
 	  (make-instance 'axis :positions (list left)
 			 :marks (list (format nil "~f" left)))))))
   (with-context (context)
-    (let ((index-guess (autoaxis-guess-index mapping autoaxis))
-	  (maximum-good-overlap (* *autoaxis-minimum-mark-distance*
-			      (capital-letter-height)
-			      -1)))
+    (bind ((allowed-maximum-overlap (- (* *autoaxis-minimum-text-distance* 
+                                          (capital-letter-height))))
+           ((:values index-guess index-min index-max)
+            (autoaxis-guess-index mapping autoaxis))
+           ((:values smallest-index largest-index)
+            (flet ((apply-if (function value1 value2)
+                     ;; used for constraining conditional on boundary
+                     (if value1
+                         (funcall function value1 value2)
+                         value2)))
+              (values (apply-if #'max index-min (- index-guess *autoaxis-exploration*))
+                      (apply-if #'min index-max (+ index-guess *autoaxis-exploration*))))))
       (flet ((unit-mapping (x)
 	       ;; map [0,inf) to [0,1), for badness calculations.  the
 	       ;; only thing that matters is that it preserves
 	       ;; ordering
 	       (/ x (1+ x))))
 	(iter
-	  (for index :from (- index-guess *autoaxis-exploration*)
-	       :to (+ index-guess *autoaxis-exploration*))
-	  (for axis := (autoaxis-generate-marks mapping autoaxis index))
+	  (for index :from smallest-index :to largest-index)
+	  (for axis := (autoaxis-generate mapping autoaxis index))
 	  (for overlap := (calculate-maximum-overlap mapping axis extent))
 	  (for badness :=
 	       ;; in order of decreasing badness, mapped to positive intervals
@@ -127,13 +140,14 @@ context.  Extent is :width or :height."
 		 ((not overlap)
 		  2)
 		 ;; no overlap, but not enough space
-		 ((< maximum-good-overlap overlap 0)
-		  (1+ (unit-mapping (- overlap maximum-good-overlap))))
+		 ((< allowed-maximum-overlap overlap 0)
+		  (1+ (unit-mapping (- overlap allowed-maximum-overlap))))
 		 ;; enough space, lets pack them as tight as possible
-		 ((< overlap maximum-good-overlap)
-		  (unit-mapping (- maximum-good-overlap overlap)))))
-	  (format t "index=~a~%axis=~a~%overlap=~a~%badness~a~%"
-		  index axis overlap badness)
+		 ((<= overlap allowed-maximum-overlap)
+		  (unit-mapping (- allowed-maximum-overlap overlap)))))
+	  ;; (format t "~&*************~%~
+          ;;            index=~a  axis=~a~%overlap=~a  badness=~a  max-ov=~a~%"
+          ;;            index axis overlap badness allowed-maximum-overlap)
 	  (finding axis :minimizing badness))))))
 
 (defun axis-set-style-expand (mapping axis axis-style extent &optional
@@ -222,8 +236,8 @@ context.  Extent is :width or :height."
 				  tick-padding title-padding) axis-style
 	  (bind ((axis (axis-set-style-expand mapping axis axis-style
 					      (case mark-direction
-						((:up :down) :width)
-						(otherwise :height))))
+						((:up :down) :height)
+						(otherwise :width))))
 		 ((:values start direction mark-y-align
 			   title-y-align title-angle)
 		  (if bottom-axis-p

@@ -26,6 +26,6 @@
 	       :iterate
 	       :cl-colors
 	       :cl-utilities
-	       :array-operations
 	       :metabang-bind
-	       :cl-numlib))
+	       :cl-numlib
+               :xarray))

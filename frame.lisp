@@ -78,24 +78,25 @@ with a single element."
 				     context background-color) frame
       (let ((xints (split-interval horizontal-interval (seq% divx)))
 	    (yints (split-interval vertical-interval (seq% divy))))
-	(outer-product yints xints	; order is important!
-		       :function (lambda (yint xint)
-				   (make-instance 'frame 
-						  :horizontal-interval xint
-						  :vertical-interval yint
-						  :context context 
-						  :background-color 
-						  background-color)))))))
+	(xop 'array
+             (lambda (yint xint)
+               (make-instance 'frame 
+                              :horizontal-interval xint
+                              :vertical-interval yint
+                              :context context 
+                              :background-color 
+                              background-color))
+              yints xints)))))	; order is important!
 
 (defun split-frame-horizontally (frame &rest divx)
   "Split the frame at subdivisions divx.  The resulting frames are
 returned as a list."
-  (flatten-array (split-frame frame divx nil)))
+  (take 'array (drop (split-frame frame divx nil))))
 
 (defun split-frame-vertically (frame &rest divy)
   "Split the frame at subdivisions divy.  The resulting frames are
 returned as a list."
-  (flatten-array (split-frame frame nil divy)))
+  (take 'array (drop (split-frame frame nil divy))))
 
 (defclass padding ()
   ((left :initarg :left)

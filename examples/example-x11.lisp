@@ -1,8 +1,8 @@
 (in-package :cl-user)
+(require :cl-2d)
 (in-package :cl-2d)
 (require :cl-cairo2)
 (require :cl-cairo2-x11)
-(require :cl-2d)
 (use-package '(:cl-cairo2 :cl-2d :cl-numlib :cl-colors :bind))
 
 ;;; this is how you create an X11 frame.  If you supply a

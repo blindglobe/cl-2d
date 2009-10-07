@@ -91,7 +91,7 @@ weight on right."
 	  ((null r))			; do nothing
 	  ((numberp r) (process r))	; process number
 	  ((typep r 'sequence) (map nil #'process r)) ; process elements of seq.
-	  ((typep r 'array) (map nil #'process (flatten-array r)))
+	  ((typep r 'array) (map nil #'process (take 'array (flat r))))
 	  ((typep r 'interval)			      ; process interval
 	   (process (left r))
 	   (process (right r)))
@@ -230,7 +230,7 @@ handled and the value is nil.  Return (values xs fxs)."
   (let ((xs (num-sequence :from (left domain)
 			  :to (right domain)
 			  :length number-of-points))
-	(fxs (make-array (1+ number-of-points)))
+	(fxs (make-array number-of-points))
 	(caught-condition-p nil))
     (iter
       (for i :from 0)

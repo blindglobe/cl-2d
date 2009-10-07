@@ -267,7 +267,6 @@ whether vertical lines are drawn."
 ;;;      (when clear-frame-p
 	(clear frame) ;;;)
       ;; draw axes
-      (format t "title=~a~%" y-title)
       (left-axis left-axis-frame (y-mapping drawing-area) y-axis y-title
       		 left-axis-style)
       (bottom-axis bottom-axis-frame (x-mapping drawing-area) x-axis x-title

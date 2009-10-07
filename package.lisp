@@ -4,9 +4,9 @@
 	:iterate 
 	:cl-colors 
 	:cl-utilities 
-	:array-operations
 	:bind
-	:cl-numlib)
+	:cl-numlib
+        :xarray)
   (:shadowing-import-from :iterate :collecting :collect)
   (:export
 

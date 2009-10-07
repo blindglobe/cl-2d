@@ -49,10 +49,10 @@ through make-local-filename."
 (with-pdf-frame (frame "image.pdf" 400 300)
   (let* ((x (num-sequence :from -40 :to 103 :length 40))
 	 (y (num-sequence :from 7 :to 40 :length 40))
-	 (image (array-operations:outer-product 
-		 x y :function
+	 (image (xarray:xop 'array
 		 #'(lambda (x y) 
-		     (sqrt (+ (square x) (square y)))))))
+		     (sqrt (+ (square x) (square y))))
+                 x y)))
     (plot-image frame x y image :x-title "x" :y-title "y" 
 		:z-title "distance from origin")))
 
