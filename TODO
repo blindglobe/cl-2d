@@ -1,4 +1,7 @@
 - object oriented axis mappings with log scales etc
+  - rewrite plotting functions similarly to plot-simple
+  - log10 axes
+  - examples: log2 axes
 
 - clean up text-drawing functions, create a high-level one (?)
 

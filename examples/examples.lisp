@@ -113,3 +113,19 @@ through make-local-filename."
 		    :line-style (modify-style +line-solid+ :color +white+
 					      :width 2)
 		    :y-title "count of draws")))
+
+;; axes
+
+;; axis test
+
+(with-pdf-frame (frame "axis-test.pdf" 600 600)
+  (bind ((#2A((nil bottom nil)
+	      (left center right)
+	      (nil top nil))
+	     (split-frame frame (spacers 1 1 1) (spacers 1 1 1)))
+	 (da (setup-drawing-area center (make-interval 1 2)
+				 (make-interval 3 4))))
+    (left-axis left (y-mapping da) t "left")
+    (right-axis right (y-mapping da) t "right")
+    (bottom-axis bottom (x-mapping da) t "bottom")
+    (top-axis top (x-mapping da) t "top")))

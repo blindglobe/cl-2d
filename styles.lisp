@@ -98,18 +98,22 @@ values.  Example: (modify-slots line-style :width 2 :color +red+."
     :initform 5
     :initarg :tick-padding
     :documentation "padding between edge of frame and axis title")
-   (label-orientation
-    :initform 'parallel
-    :initarg :label-orientation
-    :accessor label-orientation
-    :documentation "orientation of labels (can be parallel, perpendicular,
-horizontal, vertical")))
+   (mark-direction
+    :initform :right
+    :initarg :mark-direction
+    :accessor mark-direction
+    :documentation "direction of labels (right is normal text)")))
 
-(defparameter *default-axis-style* (make-instance 'axis-style))
+(defparameter *default-left-axis-style*
+  (make-instance 'axis-style :mark-direction :up))
+(defparameter *default-right-axis-style*
+  (make-instance 'axis-style :mark-direction :down))
+(defparameter *default-horizontal-axis-style*
+  (make-instance 'axis-style :mark-direction :right))
 
 (defclass image-legend-style ()
   ((axis-style
-    :initform (make-instance 'axis-style)
+    :initform (make-instance 'axis-style :mark-direction :down)
     :initarg :font-style
     :documentation "axis style")
    (width
@@ -149,7 +153,7 @@ horizontal, vertical")))
     :initarg :left-axis-size
     :documentation "space reserved for left axis (incl labels)")
    (left-axis-style
-    :initform (make-instance 'axis-style)
+    :initform (make-instance 'axis-style :mark-direction :up)
     :initarg :left-axis-style
     :documentation "style of left axis")))
 
@@ -170,7 +174,7 @@ horizontal, vertical")))
     :initarg :right-axis-size
     :documentation "space reserved for right axis (incl labels)")
    (right-axis-style
-    :initform (make-instance 'axis-style)
+    :initform (make-instance 'axis-style :mark-direction :down)
     :initarg :right-axis-style
     :documentation "style of right axis")))
 

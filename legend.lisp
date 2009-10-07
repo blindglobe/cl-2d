@@ -49,7 +49,6 @@
 	      ;; homogenous rectangle for denegerate 
 	      (fill-with-color gradient-frame
 			       (funcall color-function lower))
-	      ;; draw color gradient
 	      (with-slots (horizontal-interval vertical-interval context)
 		  gradient-frame
 		(with-slots ((left-edge left) (right-edge right))
@@ -58,6 +57,7 @@
 		    (let ((mapping (make-instance 'linear-mapping
 						  :domain domain
 						  :range vertical-interval)))
+		      ;; draw color gradient
 		      (iter
 			(for i from 0 below number-of-colors)
 			(for left := (convex-combination 
@@ -71,10 +71,8 @@
 				  (/ (+ left right) 2))
 			 left-edge (map-coordinate mapping left :int)
 			 right-edge (map-coordinate mapping right :int)
-			 context)))))))
-	  ;; draw axis
-	  (right-axis axis-frame 
-		      (make-instance 'standard-axis
-				     :interval (make-interval lower upper)
-				     :title z-title)
-		      (slot-value image-legend-style 'axis-style)))))))
+			 context))
+		      ;; draw axis
+		      (right-axis axis-frame mapping t z-title 
+				  (slot-value image-legend-style
+					      'axis-style))))))))))))

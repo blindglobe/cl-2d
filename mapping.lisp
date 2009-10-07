@@ -24,6 +24,9 @@
       (make-interval (funcall (conversion (left domain)))
 		     (funcall (conversion (right domain))))))
   (:documentation "Return range as an interval."))
+
+;;;;  linear mapping
+;;;;  
   
 (defclass linear-mapping (coordinate-mapping)
   ()
@@ -44,6 +47,9 @@
 		  (+ (* x multiplier) constant))))))
   coordinate-mapping)
 
+;;;;  constant mapping
+;;;;
+
 (defclass constant-mapping (coordinate-mapping)
   ()
   (:documentation "A mapping to a constant.  Useful when the range is
@@ -57,8 +63,27 @@
   coordinate-mapping)
 
 
-;;;; !!! TODO: log mapping, should not be hard, but also need to do axes
+;;;;  log mapping
+;;;; 
 
-;; (defparameter *m* (make-instance 'linear-mapping 
-;; 				 :domain (interval-of 1 2)
-;; 				 :range (interval-of 100 200)))
+(defclass log-mapping (coordinate-mapping)
+  ()
+  (:documentation "A mapping for logarithmic axes."))
+
+(defmethod initialize-instance :after ((coordinate-mapping log-mapping)
+				       &key range snap-p)
+  (assert (and (typep range 'interval) (not (zero-interval-p range))))
+  (with-slots (domain conversion) coordinate-mapping
+    (assert (positive-interval-p domain))
+    (setf conversion
+  	  (let* ((log-left (log (left domain)))
+		 (log-right (log (right domain)))
+		 (multiplier (/ (interval-diff range) (- log-right log-left)))
+  		 (constant (- (left range) (* multiplier log-left))))
+	    (if snap-p
+		(lambda (x &optional (snap-mode :none))
+		  (snap (+ (* (log x) multiplier) constant) snap-mode))
+		(lambda (x &optional (snap-mode :none))
+		  (declare (ignore snap-mode))
+		  (+ (* (log x) multiplier) constant))))))
+  coordinate-mapping)

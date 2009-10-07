@@ -1,4 +1,5 @@
 (in-package :cl-user)
+(in-package :cl-2d)
 (require :cl-cairo2)
 (require :cl-cairo2-x11)
 (require :cl-2d)
@@ -10,6 +11,7 @@
 
 (defparameter *frame* (as-frame (create-xlib-image-context 800 600)
 			       :background-color +white+))
+
 
 (plot-function *frame* #'exp (interval-of 0 2) :x-title "x" :y-title "exp(x)")
 

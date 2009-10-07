@@ -235,18 +235,17 @@ whether vertical lines are drawn."
 
 ;;;; plot functions
 ;;;;
-;;;; All of the return drawing area(s) as atom/list.
+;;;; All of these functions return drawing area(s) as atoms (single
+;;;; one) or lists.
 
 (defun plot-simple (frame x-interval y-interval
 		    &key (x-title "") (y-title "")
+		    (x-mapping-type 'linear-mapping)
+		    (y-mapping-type 'linear-mapping)
+		    (x-axis t)
+		    (y-axis t)
 		    (simple-plot-style *default-simple-plot-style*)
-		    (x-axis (make-instance 'standard-axis
-					   :interval x-interval
-					   :title x-title))
-		    (y-axis (make-instance 'standard-axis
-					   :interval y-interval
-					   :title y-title))
-		    (clear-frame-p t))
+		    #| (clear-frame-p t) |#)
   "Create an plot with an empty drawing-area of the given interval."
   (with-slots 
 	(frame-padding
@@ -260,28 +259,31 @@ whether vertical lines are drawn."
 							   left-axis-size
 							   bottom-axis-size))
 	   (drawing-area 
-	    (setup-drawing-area plot-frame x-interval y-interval)))
+	    (setup-drawing-area plot-frame x-interval y-interval
+				:x-mapping-type x-mapping-type
+				:y-mapping-type y-mapping-type)))
       (declare (ignore corner))
-      (when clear-frame-p
-	(clear frame))
+;;; !!! I don't think I need clear-frame-p
+;;;      (when clear-frame-p
+	(clear frame) ;;;)
       ;; draw axes
-      (left-axis left-axis-frame y-axis left-axis-style)
-      (bottom-axis bottom-axis-frame x-axis bottom-axis-style)
+      (format t "title=~a~%" y-title)
+      (left-axis left-axis-frame (y-mapping drawing-area) y-axis y-title
+      		 left-axis-style)
+      (bottom-axis bottom-axis-frame (x-mapping drawing-area) x-axis x-title
+      		   bottom-axis-style)
       ;; return drawing-area
       drawing-area)))
 
 (defun plot-two-sided (frame x-interval y1-interval y2-interval
 		       &key (x-title "") (y1-title "") (y2-title "")
-		       (two-sided-plot-style *default-two-sided-plot-style*)
-		       (x-axis (make-instance 'standard-axis
-					   :interval x-interval
-					   :title x-title))
-		       (y1-axis (make-instance 'standard-axis
-					   :interval y1-interval
-					   :title y1-title))
-		       (y2-axis (make-instance 'standard-axis
-					   :interval y2-interval
-					   :title y2-title)))
+		       (x-mapping-type 'linear-mapping)
+		       (y1-mapping-type 'linear-mapping)
+		       (y2-mapping-type 'linear-mapping)
+		       (x-axis t)
+		       (y1-axis t)
+		       (y2-axis t)
+		       (two-sided-plot-style *default-two-sided-plot-style*))
   "Create an plot with an empty drawing-area of the given intervals, with
 y-axis on both the left and right sides, returning two drawing areas
 in a list."
@@ -301,28 +303,42 @@ in a list."
 			    (list left-axis-size (spacer) right-axis-size)
 			    (list bottom-axis-size (spacer))))
 	   (drawing-area1
-	    (setup-drawing-area plot-frame x-interval y1-interval))
+	    (setup-drawing-area plot-frame x-interval y1-interval
+				:x-mapping-type x-mapping-type
+				:y-mapping-type y1-mapping-type))
 	   (drawing-area2
-	    (setup-drawing-area plot-frame x-interval y2-interval)))
+	    (setup-drawing-area plot-frame x-interval y2-interval
+				:x-mapping-type x-mapping-type
+				:y-mapping-type y2-mapping-type)))
       (declare (ignore left-corner right-corner))
       ;; draw axes
-      (left-axis left-axis-frame y1-axis left-axis-style)
-      (right-axis right-axis-frame y2-axis right-axis-style)
-      (bottom-axis bottom-axis-frame x-axis bottom-axis-style)
+      (left-axis left-axis-frame (y-mapping drawing-area1) y1-axis y1-title
+		 left-axis-style)
+      (right-axis right-axis-frame (y-mapping drawing-area1) y2-axis y2-title
+		  right-axis-style)
+      (bottom-axis bottom-axis-frame (x-mapping drawing-area1) x-axis x-title
+		   bottom-axis-style)
       ;; return drawing-area
       (list drawing-area1 drawing-area2))))
 
 (defun plot-lines (frame xs ys &key (x-interval (interval-of xs))
 		   (y-interval (interval-of ys))
+		   (x-title "x") (y-title "y")
+		   (x-mapping-type 'linear-mapping)
+		   (y-mapping-type 'linear-mapping)
+		   (x-axis t)
+		   (y-axis t)
 		   (simple-plot-style *default-simple-plot-style*)
-		   (line-style *default-line-style*)
-		   (x-title "x") (y-title "y"))
+		   (line-style *default-line-style*))
   "Create a line plot with the given coordinate pairs."
   ;; create plot
   (let ((drawing-area (plot-simple frame x-interval y-interval
-				   :simple-plot-style simple-plot-style
 				   :x-title x-title 
-				   :y-title y-title)))
+				   :y-title y-title
+				   :simple-plot-style simple-plot-style
+				   :x-mapping-type x-mapping-type
+				   :y-mapping-type y-mapping-type :x-axis x-axis
+				   :y-axis y-axis)))
     ;; plot function
     (draw-lines drawing-area xs ys line-style)
     ;; return drawing-area
@@ -334,6 +350,12 @@ in a list."
 			     (x-title "x")
 			     (y1-title "y1")
 			     (y2-title "y2")
+			     (x-mapping-type 'linear-mapping)
+			     (y1-mapping-type 'linear-mapping)
+			     (y2-mapping-type 'linear-mapping)
+			     (x-axis t)
+			     (y1-axis t)
+			     (y2-axis t)
 			     (two-sided-plot-style *default-two-sided-plot-style*)
 			     (line-style1 +line-solid+)
 			     (line-style2 +line-dash+))
@@ -342,6 +364,10 @@ in a list."
   (bind (((da1 da2) 
 	  (plot-two-sided frame x-interval y1-interval y2-interval
 			  :x-title x-title :y1-title y1-title :y2-title y2-title 
+			  :x-mapping-type x-mapping-type
+			  :y1-mapping-type y1-mapping-type
+			  :y2-mapping-type y2-mapping-type
+			  :x-axis x-axis :y1-axis y1-axis :y2-axis y2-axis
 			  :two-sided-plot-style two-sided-plot-style)))
     (draw-lines da1 xs y1s line-style1)
     (draw-lines da2 xs y2s line-style2)
@@ -349,10 +375,14 @@ in a list."
   
 (defun plot-function (frame function x-interval &key
 		      (y-interval #'interval-of)
+		      (x-title "x") (y-title (format nil "f(~a)" x-title))
+		      (x-mapping-type 'linear-mapping)
+		      (y-mapping-type 'linear-mapping)
+		      (x-axis t)
+		      (y-axis t)
 		      (simple-plot-style *default-simple-plot-style*)
 		      (line-style *default-line-style*)
 		      (number-of-points 101)
-		      (x-title "x") (y-title (format nil "f(~a)" x-title))
 		      (ignorable-conditions '(division-by-zero)))
   "Set up a plot and draw the function in the given interval.  If the
 y-lower and y-upper endpoints are not specified, they are calculated
@@ -365,24 +395,27 @@ intepretation of ignorable-conditions, see calculate-function."
     (let ((y-interval (funcall y-interval fxs)))
       ;; create plot
       (plot-lines frame xs fxs :x-interval x-interval :y-interval y-interval
-		  :simple-plot-style simple-plot-style
-		  :line-style line-style
-		  :x-title x-title
-		  :y-title y-title))))
+		  :x-title x-title :y-title y-title :x-mapping-type x-mapping-type
+		  :y-mapping-type y-mapping-type :x-axis x-axis :y-axis y-axis
+		  :simple-plot-style simple-plot-style :line-style line-style))))
 
 (defun plot-sequence (frame sequence &key
+		      (x-interval (make-interval 0 (1- (length sequence))))
 		      (y-interval (interval-of sequence))
+		      (x-title "N") (y-title "sequence")
+		      (x-mapping-type 'linear-mapping)
+		      (y-mapping-type 'linear-mapping)
+		      (x-axis t) (y-axis t)
 		      (simple-plot-style *default-simple-plot-style*)
-		      (line-style *default-line-style*)
-		      (x-title "N") (y-title "sequence"))
+		      (line-style *default-line-style*))
   "Plot a sequence, ie values mapped to 0, 1, 2, ..."
   (let* ((vector (coerce sequence 'vector))
 	 (length (length vector)))
     (plot-lines frame (num-sequence :from 0 :by 1 :length length) vector
-		:x-interval (make-interval 0 (1- length)) :y-interval y-interval
-		:simple-plot-style simple-plot-style
-		:line-style line-style :x-title x-title
-		:y-title y-title)))
+		:x-interval x-interval :y-interval y-interval
+		:x-title x-title :y-title y-title :x-mapping-type x-mapping-type
+		:y-mapping-type y-mapping-type :x-axis x-axis :y-axis y-axis
+		:simple-plot-style simple-plot-style :line-style line-style)))
 
 (defun create-boundaries (x conv interval)
   "Create boundaries for rectangles in an image plot.  Boundaries are
@@ -405,14 +438,18 @@ restricted to interval."
       boundaries))
 
 (defun plot-image (frame x y z &key (color-mapping #'make-hue-color-mapping)
+		   (x-interval (interval-of x))
+		   (y-interval (interval-of y))
+		   (x-title "x")
+		   (y-title "y")
+		   (z-title "z")
+		   (x-mapping-type 'linear-mapping)
+		   (y-mapping-type 'linear-mapping)
+		   (x-axis t)
+		   (y-axis t)
 		   (plot-style *default-image-plot-style*)
 		   (image-legend-style *default-image-legend-style*)
-		   (legend-width 70)
-		   (x-title "")
-		   (y-title "")
-		   (z-title "")
-		   (x-interval (interval-of x))
-		   (y-interval (interval-of y)))
+		   (legend-width 70))
   (declare ((array * (*)) x y))		; !!! real
   (declare ((array * (* *)) z))		; !!! real
   ;; if color mapping is a function, use it to calculate color mapping
@@ -426,9 +463,12 @@ restricted to interval."
 	   (drawing-area 
 	    (plot-simple plot-frame
 			 x-interval y-interval
-			 :simple-plot-style plot-style
 			 :x-title x-title :y-title y-title
-			 :clear-frame-p nil)))
+			 :x-mapping-type x-mapping-type
+			 :y-mapping-type y-mapping-type
+			 :simple-plot-style plot-style
+			 :x-axis x-axis :y-axis y-axis
+			 #| :clear-frame-p nil |# ))) ;; do I need it?
       ;; plot image
       (with-slots (context x-mapping y-mapping) drawing-area
 	(let ((x-boundaries (create-boundaries x (conversion x-mapping) x-interval))
@@ -451,10 +491,16 @@ restricted to interval."
 
 
 (defun plot-histogram (frame histogram &key
+		       (x-interval (interval-of (slot-value histogram 'breaks)))
+		       (y-interval (interval-of (counts histogram) 0))
+		       (x-title "x") (y-title "count")
+		       (x-mapping-type 'linear-mapping)
+		       (y-mapping-type 'linear-mapping)
+		       (x-axis t)
+		       (y-axis t)
 		       (simple-plot-style *default-simple-plot-style*)
 		       (line-style *default-line-style*)
-		       (x-title "x") (y-title "count") vertical-lines-p
-		       (x-interval (interval-of (slot-value histogram 'breaks)))
+		        vertical-lines-p
 		       (fill-color nil))
   "Plot the histogram on frame, return the resulting drawing area.
 For the meaning of parameters, see draw-histogram."
@@ -462,10 +508,12 @@ For the meaning of parameters, see draw-histogram."
   (with-slots (breaks counts) histogram
     (let ((drawing-area (plot-simple frame 
 				     x-interval
-				     (interval-of counts 0)
+				     y-interval 
+				     :x-title x-title :y-title y-title
+				     :x-mapping-type x-mapping-type
+				     :y-mapping-type y-mapping-type
 				     :simple-plot-style simple-plot-style
-				     :x-title x-title 
-				     :y-title y-title)))
+				     :x-axis x-axis :y-axis y-axis)))
       (draw-histogram drawing-area histogram
 		      :line-style line-style
 		      :vertical-lines-p vertical-lines-p :fill-color fill-color)

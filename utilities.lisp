@@ -93,19 +93,29 @@ On borders (int+0.5 for :int, int for :half) they round up."
     (declare (ignore x-bearing y-bearing width))
     height))
 
-(defgeneric aligned-text (x y text &key x-align y-align angle context))
+(defun alignment-rotation (x-align y-align angle)
+  "Return the after-rotation alignment as values."
+  (let ((x-align (- x-align 0.5))
+	(y-align (- y-align 0.5)))
+    (values (+ 0.5 (* (cos angle) x-align) (- (* (sin angle) y-align)))
+	    (+ 0.5 (* (sin angle) x-align) (* (cos angle) y-align)))))
+
+(defgeneric aligned-text (x y text &key x-align y-align angle context
+			    rotate-after-p))
   
 (defmethod aligned-text (x y (text-with-extents text-with-extents)
 			 &key (x-align 0.5) (y-align 0.5) (angle 0)
-			 (context *context*))
+			 (context *context*) (rotate-after-p t))
   "Show text-with-extents aligned relative to (x,y).  Return width and
 height."
   (with-context (context)
     (with-slots (text x-bearing y-bearing width height) text-with-extents
-      (move-to x y)
-      (let ((trans-matrix (get-trans-matrix))
-	    (x-rel (+ x-bearing (* width x-align)))
-	    (y-rel (+ y-bearing (* height y-align))))
+      (when rotate-after-p
+      	(setf (values x-align y-align)
+      	      (alignment-rotation x-align y-align (- angle))))
+      (bind ((trans-matrix (get-trans-matrix))
+	     (x-rel (+ x-bearing (* width x-align)))
+	     (y-rel (+ y-bearing (* height y-align))))
 	;; show text
 	(move-to x y)
 	(rotate angle)
@@ -140,8 +150,9 @@ alignment with fill-color."
   
 (defmethod aligned-text (x y (text string)
 			 &key (x-align 0.5) (y-align 0.5) (angle 0)
-			 (context *context*))
+			 (context *context*) (rotate-after-p t))
   "Show text aligned relative to (x,y).  Return width and height."
   (with-context (context)
     (aligned-text x y (add-text-extents text)
-		  :x-align x-align :y-align y-align :angle angle)))
+		  :x-align x-align :y-align y-align :angle angle
+		  :rotate-after-p rotate-after-p)))

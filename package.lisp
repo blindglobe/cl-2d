@@ -38,7 +38,7 @@
    ;; mapping
 
    coordinate-mapping domain conversion map-coordinate range 
-   linear-mapping contant-mapping
+   linear-mapping contant-mapping log-mapping
 
    ;; drawing-area
    
@@ -51,10 +51,10 @@
    +dash-dash+ +dash-dot+ +dash-dot-dash+ +line-solid+ +line-dash+
    +line-dot+ +line-dot-dash+ *default-font-style*
    *default-title-font-style* *default-dash-style*
-   *default-line-style* *default-axis-style*
-   *default-simple-plot-style* *default-image-plot-style*
-   *default-image-legend-style* *default-two-sided-plot-style*
-   set-style
+   *default-line-style* *default-left-axis-style* *default-right-axis-style*
+   *default-horizontal-axis-style* *default-simple-plot-style*
+   *default-image-plot-style* *default-image-legend-style*
+   *default-two-sided-plot-style* set-style
    
    ;; axis
 
