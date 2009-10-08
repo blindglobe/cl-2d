@@ -101,7 +101,7 @@ context.  Extent is :width or :height."
          (width (width domain)))
     (when (or (zerop width) (<= (/ (width domain)
                                    (max (abs (left domain)) (abs (right domain))))
-                                1e-10)) ; !!! ? relative precision
+                                1e-10)) ; !!! ? cf relative precision
       (let ((left (left domain)))
 	(return-from autoaxis-pick-best
 	  (make-instance 'axis :positions (list left)
@@ -141,14 +141,14 @@ context.  Extent is :width or :height."
 		 ((not overlap)
 		  2)
 		 ;; no overlap, but not enough space
-		 ((< allowed-maximum-overlap overlap 0)
+		 ((<= allowed-maximum-overlap overlap 0)
 		  (1+ (unit-mapping (- overlap allowed-maximum-overlap))))
 		 ;; enough space, lets pack them as tight as possible
-		 ((<= overlap allowed-maximum-overlap)
+		 ((< overlap allowed-maximum-overlap)
 		  (unit-mapping (- allowed-maximum-overlap overlap)))))
-	  ;; (format t "~&*************~%~
-          ;;            index=~a  axis=~a~%overlap=~a  badness=~a  max-ov=~a~%"
-          ;;            index axis overlap badness allowed-maximum-overlap)
+	  (format t "~&*************~%~
+                     index=~a  axis=~a~%overlap=~a  badness=~a  max-ov=~a~%"
+                     index axis overlap badness allowed-maximum-overlap)
 	  (finding axis :minimizing badness))))))
 
 (defun axis-set-style-expand (mapping axis axis-style extent &optional

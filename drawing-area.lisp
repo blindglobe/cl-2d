@@ -19,14 +19,22 @@ conditional on whether the context is pixel based."
   (with-slots ((h-int horizontal-interval)
 	       (v-int vertical-interval)
 	       context background-color) frame
-    (let ((snap-p (pixel-based-p context)))
-      (make-instance 'drawing-area 
-		     :horizontal-interval h-int
-		     :vertical-interval v-int :context context
-		     :background-color background-color
-		     :x-mapping (make-instance x-mapping-type :domain x-interval
-					       :range h-int
-					       :snap-p snap-p)
-		     :y-mapping (make-instance y-mapping-type :domain y-interval
-					       :range v-int
-					       :snap-p snap-p)))))
+    (flet ((maybe-constant-mapping (interval mapping-type)
+             (if (zerop (width interval))
+                 'constant-mapping
+                 mapping-type)))
+      (let ((snap-p (pixel-based-p context)))
+        (make-instance 'drawing-area 
+                       :horizontal-interval h-int
+                       :vertical-interval v-int :context context
+                       :background-color background-color
+                       :x-mapping (make-instance (maybe-constant-mapping 
+                                                  x-interval x-mapping-type)
+                                                  :domain x-interval
+                                                  :range h-int
+                                                  :snap-p snap-p)
+                       :y-mapping (make-instance (maybe-constant-mapping
+                                                  y-interval y-mapping-type)
+                                                 :domain y-interval
+                                                 :range v-int
+                                                 :snap-p snap-p))))))

@@ -25,6 +25,26 @@
 		     (funcall (conversion (right domain))))))
   (:documentation "Return range as an interval."))
 
+;;;;  constant mapping
+;;;;
+
+(defclass constant-mapping (coordinate-mapping)
+  ()
+  (:documentation "A mapping to a constant.  Useful when the range is
+  zero."))
+
+(defmethod initialize-instance :after ((coordinate-mapping constant-mapping)
+				   &key range snap-p)
+  (assert (typep range 'interval))
+  (let ((value (/ (+ (left range) (right range)) 2)))
+    (setf (slot-value coordinate-mapping 'conversion)
+          (if snap-p
+              (lambda (x &optional (snap-mode :none))
+                (declare (ignore x))
+                (snap value snap-mode))
+              (constantly value))))
+  coordinate-mapping)
+
 ;;;;  linear mapping
 ;;;;  
   
@@ -47,20 +67,6 @@
 		  (+ (* x multiplier) constant))))))
   coordinate-mapping)
 
-;;;;  constant mapping
-;;;;
-
-(defclass constant-mapping (coordinate-mapping)
-  ()
-  (:documentation "A mapping to a constant.  Useful when the range is
-  zero."))
-
-(defmethod initialize-instance :after ((coordinate-mapping constant-mapping)
-				   &key range)
-  (assert (typep range 'interval))
-  (setf (slot-value coordinate-mapping 'conversion)
-	(constantly (/ (+ (left range) (right range)) 2)))
-  coordinate-mapping)
 
 
 ;;;;  log mapping
