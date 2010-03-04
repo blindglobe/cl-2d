@@ -522,9 +522,9 @@ restricted to interval."
 		       (x-axis t)
 		       (y-axis t)
 		       (simple-plot-style *default-simple-plot-style*)
-		       (line-style *default-line-style*)
-		        vertical-lines-p
-		       (fill-color nil))
+		       (line-style nil)
+                       vertical-lines-p
+		       (fill-color +grey70+))
   "Plot the histogram on frame, return the resulting drawing area.
 For the meaning of parameters, see draw-histogram."
   ;; create plot

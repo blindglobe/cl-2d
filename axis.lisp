@@ -146,9 +146,9 @@ context.  Extent is :width or :height."
 		 ;; enough space, lets pack them as tight as possible
 		 ((< overlap allowed-maximum-overlap)
 		  (unit-mapping (- allowed-maximum-overlap overlap)))))
-	  (format t "~&*************~%~
-                     index=~a  axis=~a~%overlap=~a  badness=~a  max-ov=~a~%"
-                     index axis overlap badness allowed-maximum-overlap)
+	  ;; (format t "~&*************~%~
+          ;;            index=~a  axis=~a~%overlap=~a  badness=~a  max-ov=~a~%"
+          ;;            index axis overlap badness allowed-maximum-overlap)
 	  (finding axis :minimizing badness))))))
 
 (defun axis-set-style-expand (mapping axis axis-style extent &optional

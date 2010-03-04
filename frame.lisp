@@ -57,6 +57,16 @@ background-color: ~a"
 		 :context object
 		 :background-color background-color))
 
+
+(defmethod as-frame ((object xlib-image-context)
+                     &key (background-color +white+))
+  (make-instance 'frame
+		 :horizontal-interval (make-interval 0 (width object))
+		 :vertical-interval (make-interval (height object) 0)
+		 :context object
+		 :background-color background-color))
+
+
 ;;;;
 ;;;; frame manipulations
 ;;;;
@@ -91,12 +101,12 @@ with a single element."
 (defun split-frame-horizontally (frame &rest divx)
   "Split the frame at subdivisions divx.  The resulting frames are
 returned as a list."
-  (take 'array (drop (split-frame frame divx nil))))
+  (as 'array (drop (split-frame frame divx nil))))
 
 (defun split-frame-vertically (frame &rest divy)
   "Split the frame at subdivisions divy.  The resulting frames are
 returned as a list."
-  (take 'array (drop (split-frame frame nil divy))))
+  (as 'array (drop (split-frame frame nil divy))))
 
 (defclass padding ()
   ((left :initarg :left)
