@@ -4,18 +4,27 @@
 ;;;; decreasing, as there can be negative intervals (eg for reverse
 ;;;; plots), but some functions (eg interval-containing and
 ;;;; interval-intersection) return positive intervals by construction.
-;;;; The most important function is interval-containing, which returns
-;;;; an interval containing its arguments (which can be intervals too,
+;;;; The most important function is interval-of, which returns an
+;;;; interval containing its arguments (which can be intervals too,
 ;;;; among other things), ignoring nil's, or nil if all the arguments
-;;;; are nil.
+;;;; are nil.  If it encounters a forced-interval, that replaces the
+;;;; combination resulting from the previous intervals.
 
 (defclass interval ()
   ((left :initarg :left :accessor left)
    (right :initarg :right :accessor right)))
 
-(defun make-interval (left right)
+(defclass forced-interval (interval)
+  ()
+  (:documentation "When combined using interval-of, replaces the last
+  effective union."))
+
+(defun make-interval (left right &optional forced?)
   "Shorthand for creating intervals."
-  (make-instance 'interval :left left :right right))
+  (make-instance (if forced?
+                     'forced-interval
+                     'interval)
+                 :left left :right right))
 
 (defmethod print-object ((obj interval) stream)
   (print-unreadable-object (obj stream :type t)
@@ -87,12 +96,15 @@ weight on right."
 			       (max right x)
 			       x)))))
       (dolist (r rest)
-	(cond
-	  ((null r))			; do nothing
-	  ((numberp r) (process r))	; process number
-	  ((typep r 'sequence) (map nil #'process r)) ; process elements of seq.
-	  ((typep r 'array) (map nil #'process (take 'array (flat r))))
-	  ((typep r 'interval)			      ; process interval
+	(typecase r
+	  (null)                                      ; do nothing
+	  (number (process r))                       ; process number
+	  (sequence (map nil #'process r)) ; process elements of seq.
+	  (array (map nil #'process (as 'array (flat r))))
+          (forced-interval
+             (setf left (left r)
+                   right (right r)))
+	  (interval                    ; process interval
 	   (process (left r))
 	   (process (right r)))
 	  (t (error "argument ~a is not a list, array, real number or

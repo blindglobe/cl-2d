@@ -397,7 +397,7 @@ in a list."
                   :color-function color-function)))
   
 (defun plot-function (frame function x-interval &key
-		      (y-interval #'interval-of)
+		      (y-interval nil)
 		      (x-title "x") (y-title (format nil "f(~a)" x-title))
 		      (x-mapping-type 'linear-mapping)
 		      (y-mapping-type 'linear-mapping)
@@ -407,15 +407,15 @@ in a list."
 		      (line-style *default-line-style*)
 		      (number-of-points 101)
 		      (ignorable-conditions '(division-by-zero)))
-  "Set up a plot and draw the function in the given interval.  If the
-y-lower and y-upper endpoints are not specified, they are calculated
-automatically by calling y-interval on the y values.  For the
-intepretation of ignorable-conditions, see calculate-function."
+  "Set up a plot and draw the function in the interval (interval-of ys
+y-interval), ie NIL is ignored, points are incorporated, use
+FORCED-INTERVAL to force a particular interval.  For the intepretation
+of ignorable-conditions, see calculate-function."
   ;; calculate function values
   (multiple-value-bind (xs fxs)
       (calculate-function function x-interval number-of-points
 			  ignorable-conditions)
-    (let ((y-interval (funcall y-interval fxs)))
+    (let ((y-interval (interval-of fxs y-interval)))
       ;; create plot
       (plot-lines frame xs fxs :x-interval x-interval :y-interval y-interval
 		  :x-title x-title :y-title y-title :x-mapping-type x-mapping-type
