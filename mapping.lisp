@@ -21,8 +21,8 @@
 (defgeneric range (mapping)
   (:method (mapping)
     (with-slots (domain conversion) mapping
-      (make-interval (funcall (conversion (left domain)))
-		     (funcall (conversion (right domain))))))
+      (make-interval (funcall conversion (left domain))
+		     (funcall conversion (right domain)))))
   (:documentation "Return range as an interval."))
 
 ;;;;  constant mapping
