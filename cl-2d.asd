@@ -12,7 +12,6 @@
   :components ((:file "package")
 	       (:file "utilities")
 	       (:file "contexts")
-	       (:file "interval")
 	       (:file "frame")
 	       (:file "mapping")
 	       (:file "drawing-area")
@@ -27,5 +26,5 @@
 	       :cl-colors
 	       :cl-utilities
 	       :metabang-bind
-	       :cl-numlib
+	       :cl-num-utils
                :xarray))

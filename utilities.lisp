@@ -51,7 +51,7 @@ On borders (int+0.5 for :int, int for :half) they round up."
   "Set up a path for a circle centered at (x,y) with given radius."
   (with-context (context)
     (move-to (+ x radius) y)
-    (arc x y radius 0 (twice pi))))
+    (arc x y radius 0 (* pi 2))))
 
 (defun filled-circle (x y radius color &optional (context *context*))
   "Draw a filled circle with the given color, center (x,y) and radius."

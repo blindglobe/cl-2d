@@ -97,15 +97,15 @@ minimum and maximum (nil if not constrained)."))
   "Pick the best fitting autoaxis.  Mark style needs to be set on
 context.  Extent is :width or :height."
   ;; if the domain is very narrow, just return a single mark
-  (let* ((domain (domain mapping))
-         (width (width domain)))
-    (when (or (zerop width) (<= (/ (width domain)
-                                   (max (abs (left domain)) (abs (right domain))))
+  (bind (((:accessors-r/o domain) mapping)
+         (width (interval-width domain))
+         ((:interval left right) domain))
+    (when (or (zerop width) (<= (/ width
+                                   (max (abs left) (abs right)))
                                 1e-10)) ; !!! ? cf relative precision
-      (let ((left (left domain)))
-	(return-from autoaxis-pick-best
-	  (make-instance 'axis :positions (list left)
-			 :marks (list (format nil "~f" left)))))))
+      (return-from autoaxis-pick-best
+        (make-instance 'axis :positions (list left)
+                       :marks (list (format nil "~f" left))))))
   (with-context (context)
     (bind ((allowed-maximum-overlap (- (* *autoaxis-minimum-text-distance* 
                                           (capital-letter-height))))
@@ -188,16 +188,16 @@ context.  Extent is :width or :height."
 		 ((:values start direction mark-x-align
 			   title-x-align title-angle)
 		  (if left-axis-p
-		      (values (right horizontal-interval) -1 1
+		      (values (interval-right horizontal-interval) -1 1
 			      0  (text-rotation-angle :up))
-		      (values (left horizontal-interval) 1 0
+		      (values (interval-left horizontal-interval) 1 0
 			      1 (text-rotation-angle :down))))
 		 (tick-start (+ start (* direction axis-padding)))
 		 (tick-end (+ tick-start (* direction tick-length)))
 		 (mark-x (+ tick-end (* direction tick-padding))))
 	    ;; axis line
-	    (segment tick-start (left vertical-interval)
-		     tick-start (right vertical-interval))
+	    (segment tick-start (interval-left vertical-interval)
+		     tick-start (interval-right vertical-interval))
 	    ;; axis ticks and marks
 	    (let ((angle (text-rotation-angle mark-direction)))
 	      (iter
@@ -210,8 +210,8 @@ context.  Extent is :width or :height."
 			      :angle angle))
 	    ;; draw axis title
 	    (aligned-text (- (funcall (if left-axis-p
-					   #'left
-					   #'right)
+					   #'interval-left
+					   #'interval-right)
 				       horizontal-interval)
 			      (* direction title-padding))
 			   (interval-midpoint vertical-interval) title
@@ -242,16 +242,16 @@ context.  Extent is :width or :height."
 		 ((:values start direction mark-y-align
 			   title-y-align title-angle)
 		  (if bottom-axis-p
-		      (values (right vertical-interval) 1 0
+		      (values (interval-right vertical-interval) 1 0
 			      1 (text-rotation-angle :right))
-		      (values (left vertical-interval) -1 1
+		      (values (interval-left vertical-interval) -1 1
 			      0 (text-rotation-angle :right))))
 		 (tick-start (+ start (* direction axis-padding)))
 		 (tick-end (+ tick-start (* direction tick-length)))
 		 (mark-y (+ tick-end (* direction tick-padding))))
 	    ;; axis line
-	    (segment (left horizontal-interval) tick-start
-		     (right horizontal-interval) tick-start)
+	    (segment (interval-left horizontal-interval) tick-start
+		     (interval-right horizontal-interval) tick-start)
 	    ;; axis ticks and marks
 	    (let ((angle (text-rotation-angle mark-direction)))
 	      (iter
@@ -265,8 +265,8 @@ context.  Extent is :width or :height."
 	    ;; draw axis title
 	    (aligned-text (interval-midpoint horizontal-interval)
 			  (- (funcall (if bottom-axis-p
-					  #'left
-					  #'right)
+					  #'interval-left
+					  #'interval-right)
 				      vertical-interval)
 			     (* direction title-padding))
 			  title
@@ -315,14 +315,14 @@ digits after the decimal dot.  If digits <= 0, there is no decimal dot."
 	 (left-i (funcall (if reverse-p
 			      #'ceiling
 			      #'floor)
-			  (rationalize (left domain)) step))
+			  (rationalize (interval-left domain)) step))
 	 (right-i (funcall (if reverse-p
 			       #'floor
 			       #'ceiling)
-			   (rationalize (right domain)) step))
+			   (rationalize (interval-right domain)) step))
 	 ;; determines exponent
-	 (exponent (floor (log (max (abs (left domain)) 
-				    (abs (right domain))) 10)))
+	 (exponent (floor (log (max (abs (interval-left domain)) 
+				    (abs (interval-right domain))) 10)))
 	 ;; formatting
 	 (formatter
 	  (cond
@@ -363,7 +363,7 @@ digits after the decimal dot.  If digits <= 0, there is no decimal dot."
 	   (return (make-instance 'axis :positions positions :marks marks)))))))
 
 (defmethod autoaxis-guess-index ((mapping linear-mapping) autoaxis)
-  (* (floor (log (width (domain mapping)) 10)) 3))
+  (* (floor (log (interval-width (domain mapping)) 10)) 3))
 
 (defmethod autoaxis-generate ((mapping linear-mapping) autoaxis index)
   (linear-autoaxis-marks (domain mapping) index))

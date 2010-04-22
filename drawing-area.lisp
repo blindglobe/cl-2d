@@ -20,7 +20,7 @@ conditional on whether the context is pixel based."
 	       (v-int vertical-interval)
 	       context background-color) frame
     (flet ((maybe-constant-mapping (interval mapping-type)
-             (if (zerop (width interval))
+             (if (zerop (interval-width interval))
                  'constant-mapping
                  mapping-type)))
       (let ((snap-p (pixel-based-p context)))

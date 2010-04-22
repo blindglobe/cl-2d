@@ -12,12 +12,12 @@
 
 (defun symbol-filled-circle (x y size color &optional (context *context*))
   "Filled circle symbol."
-  (let ((radius (half size)))
+  (let ((radius (/ size 2)))
     (filled-circle x y radius color context)))
 
 (defun symbol-filled-square (x y size color &optional (context *context*))
   "Filled square symbol."
-  (let ((halfsize (half size)))
+  (let ((halfsize (/ size 2)))
     (with-context (context)
       (rectangle (- x halfsize) (- y halfsize) size size)
       (set-source-color color)
@@ -25,7 +25,7 @@
   
 (defun symbol-hollow-circle (x y size color &optional (context *context*))
   "Hollow circle symbol."
-  (let ((radius (half size)))
+  (let ((radius (/ size 2)))
     (with-context (context)
       (circle-path x y radius)
       (set-source-color color)
@@ -33,7 +33,7 @@
 
 (defun symbol-hollow-square (x y size color &optional (context *context*))
   "Hollow square symbol."
-  (let ((halfsize (half size)))
+  (let ((halfsize (/ size 2)))
     (with-context (context)
       (rectangle (- x halfsize) (- y halfsize) size size)
       (set-source-color color)

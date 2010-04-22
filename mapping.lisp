@@ -18,12 +18,13 @@
   coordinate using mapping using the specified snap-mode (should
   default to :none for all methods)."))
 
-(defgeneric range (mapping)
-  (:method (mapping)
-    (with-slots (domain conversion) mapping
-      (make-interval (funcall conversion (left domain))
-		     (funcall conversion (right domain)))))
-  (:documentation "Return range as an interval."))
+(defmethod range ((mapping coordinate-mapping))
+  "Return range of the mapping as an interval."
+  (with-slots (domain conversion) mapping
+    (make-interval (funcall conversion (interval-left domain))
+                   (funcall conversion (interval-right domain)))))
+
++
 
 ;;;;  constant mapping
 ;;;;
@@ -36,7 +37,7 @@
 (defmethod initialize-instance :after ((coordinate-mapping constant-mapping)
 				   &key range snap-p)
   (assert (typep range 'interval))
-  (let ((value (/ (+ (left range) (right range)) 2)))
+  (let ((value (interval-midpoint range)))
     (setf (slot-value coordinate-mapping 'conversion)
           (if snap-p
               (lambda (x &optional (snap-mode :none))
@@ -58,7 +59,8 @@
   (with-slots (domain conversion) coordinate-mapping
     (setf conversion
   	  (let* ((multiplier (/ (interval-diff range) (interval-diff domain)))
-  		 (constant (- (left range) (* multiplier (left domain)))))
+  		 (constant (- (interval-left range)
+                              (* multiplier (interval-left domain)))))
 	    (if snap-p
 		(lambda (x &optional (snap-mode :none))
 		  (snap (+ (* x multiplier) constant) snap-mode))
@@ -82,10 +84,10 @@
   (with-slots (domain conversion) coordinate-mapping
     (assert (positive-interval-p domain))
     (setf conversion
-  	  (let* ((log-left (log (left domain)))
-		 (log-right (log (right domain)))
+  	  (let* ((log-left (log (interval-left domain)))
+		 (log-right (log (interval-right domain)))
 		 (multiplier (/ (interval-diff range) (- log-right log-left)))
-  		 (constant (- (left range) (* multiplier log-left))))
+  		 (constant (- (interval-left range) (* multiplier log-left))))
 	    (if snap-p
 		(lambda (x &optional (snap-mode :none))
 		  (snap (+ (* (log x) multiplier) constant) snap-mode))

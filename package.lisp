@@ -5,7 +5,7 @@
           :cl-colors 
           :cl-utilities 
           :bind
-          :cl-numlib
+          :cl-num-utils
           :xarray)
   (:shadowing-import-from :iterate :collecting :collect)
   (:export
@@ -16,14 +16,6 @@
    text-with-extents text x-bearing y-bearing x-advance y-advance
    add-text-extents measure-labels capital-letter-height aligned-text 
    aligned-text-rectangle
-
-   ;; interval
-
-   interval left right make-interval width interval-diff
-   positive-interval-p negative-interval-p weakly-positive-interval-p
-   weakly-negative-interval-p zero-interval-p flip-interval
-   interval-of interval-intersection fraction fractions percent
-   percents spacer spacers split-interval calculate-function
 
    ;; contexts
    

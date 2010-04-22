@@ -133,10 +133,10 @@ accommodating lines with the given width."
     (with-slots (horizontal-interval vertical-interval context) frame
       (with-context (context)
 	(reset-clip)
-	(rectangle (- (left horizontal-interval) half-width)
-		   (- (right vertical-interval) half-width)
-		   (+ line-width (width horizontal-interval))
-		   (+ line-width (width vertical-interval)))
+	(rectangle (- (interval-left horizontal-interval) half-width)
+		   (- (interval-left vertical-interval) half-width)
+		   (+ line-width (interval-width horizontal-interval))
+		   (+ line-width (interval-width vertical-interval)))
 	(clip)))))
 
 (defmacro with-clip-to-frame ((frame &optional (line-width 0)) &body body)
@@ -160,10 +160,10 @@ Protected from nonlocal exits."
   (with-slots (horizontal-interval vertical-interval context) frame
 ;;    (reset-clip context)
     (filled-rectangle color
-		      (left horizontal-interval)
-		      (right vertical-interval)
-		      (right horizontal-interval)
-		      (left vertical-interval)
+		      (interval-left horizontal-interval)
+		      (interval-right vertical-interval)
+		      (interval-right horizontal-interval)
+		      (interval-left vertical-interval)
 		      context)))
 
 (defun clear (frame)

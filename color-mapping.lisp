@@ -24,24 +24,23 @@ function maps nil to nil-color.  Gamma specifies gamma correction."
 	(make-instance 'color-mapping
 		       :domain domain
 		       :color-function (constantly lower-color))
-	(let* ((lower (left domain))
-	       (upper (right domain))
-	       (lower-hsv (->hsv lower-color))
-	       (upper-hsv (->hsv upper-color))
-	       (difference (- upper lower)))
-	  (make-instance 'color-mapping
-			 :domain domain
-			 :color-function #'(lambda (x)
-					     (if x
-						 (hsv-combination 
-						  lower-hsv upper-hsv 
-						  (let ((r (/ (- x lower)
-							      difference)))
-						    (if (= gamma 1)
+      (bind (((:interval lower upper) domain)
+             (lower-hsv (->hsv lower-color))
+             (upper-hsv (->hsv upper-color))
+             (difference (- upper lower)))
+        (make-instance 'color-mapping
+                       :domain domain
+                       :color-function #'(lambda (x)
+                                           (if x
+                                               (hsv-combination 
+                                                lower-hsv upper-hsv 
+                                                (let ((r (/ (- x lower)
+                                                            difference)))
+                                                  (if (= gamma 1)
 							r
-							(expt r gamma)))
-						  positivep)
-						 nil-color))))))
+                                                      (expt r gamma)))
+                                                positivep)
+                                               nil-color))))))
 
 (defun make-sign-color-mapping (abs-max &key (gamma 1) (nil-color +black+))
   "Return a color mapping that maps [(- abs-max),0] to blue-green,
@@ -82,8 +81,7 @@ uses lower-v for all colors.  Gamma specifies gamma correction."
 	(make-instance 'color-mapping
 		       :domain domain
 		       :color-function (constantly (gray lower-v)))
-	(let* ((lower (left domain))
-	       (upper (right domain))
+	(bind (((:interval lower upper) domain)
 	       (difference (- upper lower)))
 	  (make-instance 'color-mapping
 			 :domain domain

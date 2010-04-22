@@ -13,8 +13,8 @@
 	(let* ((vertical-center (snap* (interval-midpoint vertical-interval)
 				       :half))
 	       (text-top (- vertical-center 
-			    (half (capital-letter-height))))
-	       (horizontal-position (+ (left horizontal-interval) left-padding)))
+			    (/ (capital-letter-height) 2)))
+	       (horizontal-position (+ (interval-left horizontal-interval) left-padding)))
 	  (iter
 	    (generate elt :in style-text-pairs)
 	    (for style := (next elt))
@@ -42,37 +42,36 @@
       image-legend-style
     (bind ((internal-frame (pad-frame frame padding))
 	   (#(gradient-frame axis-frame) 
-	     (split-frame-horizontally internal-frame width (spacer))))
-      (with-slots (domain color-function) color-mapping
-	(with-slots ((lower left) (upper right)) domain
-	  (if (zero-interval-p domain)
-	      ;; homogenous rectangle for denegerate 
-	      (fill-with-color gradient-frame
-			       (funcall color-function lower))
-	      (with-slots (horizontal-interval vertical-interval context)
-		  gradient-frame
-		(with-slots ((left-edge left) (right-edge right))
-		    horizontal-interval
-		  (with-sync-lock (context)
-		    (let ((mapping (make-instance 'linear-mapping
-						  :domain domain
-						  :range vertical-interval)))
-		      ;; draw color gradient
-		      (iter
-			(for i from 0 below number-of-colors)
-			(for left := (convex-combination 
-				      lower upper
-				      (/ i number-of-colors)))
-			(for right := (convex-combination 
-				       lower upper
-				       (/ (1+ i) number-of-colors)))
-			(filled-rectangle
-			 (funcall color-function 
-				  (/ (+ left right) 2))
-			 left-edge (map-coordinate mapping left :int)
-			 right-edge (map-coordinate mapping right :int)
-			 context))
-		      ;; draw axis
-		      (right-axis axis-frame mapping t z-title 
-				  (slot-value image-legend-style
-					      'axis-style))))))))))))
+            (split-frame-horizontally internal-frame width (spacer)))
+           ((:slots domain color-function) color-mapping)
+           ((:interval lower upper) domain))
+      (if (zero-interval-p domain)
+          ;; homogenous rectangle for denegerate 
+          (fill-with-color gradient-frame
+                           (funcall color-function lower))
+          (bind (((:slots-r/o horizontal-interval vertical-interval context)
+                  gradient-frame)
+                 ((:interval left-edge right-edge) horizontal-interval))
+            (with-sync-lock (context)
+              (let ((mapping (make-instance 'linear-mapping
+                                            :domain domain
+                                            :range vertical-interval)))
+                ;; draw color gradient
+                (iter
+                  (for i from 0 below number-of-colors)
+                  (for left := (convex-combination 
+                                lower upper
+                                (/ i number-of-colors)))
+                  (for right := (convex-combination 
+                                 lower upper
+                                 (/ (1+ i) number-of-colors)))
+                  (filled-rectangle
+                   (funcall color-function 
+                            (/ (+ left right) 2))
+                   left-edge (map-coordinate mapping left :int)
+                   right-edge (map-coordinate mapping right :int)
+                   context))
+                ;; draw axis
+                (right-axis axis-frame mapping t z-title 
+                            (slot-value image-legend-style
+                                        'axis-style)))))))))

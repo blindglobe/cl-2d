@@ -76,7 +76,7 @@ The path is closed at the end.  No sanity checks are performed."
 drawing area."
   (let ((x-interval (domain (x-mapping drawing-area))))
     (draw-line drawing-area 
-	       (left x-interval) y (right x-interval) y
+	       (interval-left x-interval) y (interval-right x-interval) y
 	       line-style))
   (values))
 
@@ -85,8 +85,8 @@ drawing area."
   "Draw a vertical line at the given coordinate that spans all the
 drawing area."
   (let ((y-interval (domain (y-mapping drawing-area))))
-    (draw-line drawing-area x (left y-interval)
-	       x (right y-interval)
+    (draw-line drawing-area x (interval-left y-interval)
+	       x (interval-right y-interval)
 	       line-style))
   (values))
 
@@ -125,7 +125,7 @@ there."
   "Draw a sequence, ie values mapped to 0, 1, 2, ..."
   (let* ((vector (coerce sequence 'vector))
 	 (length (length vector)))
-  (draw-lines drawing-area (num-sequence :from 0 :by 1 :length  length) vector
+  (draw-lines drawing-area (numseq 0 1 :length length) vector
 	      line-style)))
 
 (defun draw-filled-rectangle (drawing-area x1 y1 x2 y2 fill-color 
@@ -195,9 +195,9 @@ given, 1 is used instead."
 member of ignorable-conditions is encountered, the condition is
 handled and the value is nil.  Return (values xs fxs)."
   (assert (>= number-of-points 2))
-  (let ((xs (num-sequence :from (left domain)
-			  :to (right domain)
-			  :length number-of-points))
+  (let ((xs (numseq (interval-left domain)
+                    (interval-right domain)
+                    :length number-of-points))
 	(fxs (make-array number-of-points))
 	(caught-condition-p nil))
     (iter
@@ -235,7 +235,7 @@ ignorable-conditions, see calculate-function."
 whether vertical lines are drawn."
   (with-slots (breaks counts) histogram
     (let* ((y-domain (domain (y-mapping drawing-area)))
-	   (y-min (left y-domain))
+	   (y-min (interval-left y-domain))
 	   (last-index (1- (length counts))))
       (assert (positive-interval-p y-domain))
       ;; plot histogram
@@ -348,8 +348,8 @@ in a list."
       ;; return drawing-area
       (list drawing-area1 drawing-area2))))
 
-(defun plot-lines (frame xs ys &key (x-interval (interval-of xs))
-		   (y-interval (interval-of ys))
+(defun plot-lines (frame xs ys &key (x-interval (range xs))
+		   (y-interval (range ys))
 		   (x-title "x") (y-title "y")
 		   (x-mapping-type 'linear-mapping)
 		   (y-mapping-type 'linear-mapping)
@@ -371,9 +371,9 @@ in a list."
     ;; return drawing-area
     drawing-area))
 
-(defun plot-lines-two-sided (frame xs y1s y2s &key (x-interval (interval-of xs))
-			     (y1-interval (interval-of y1s))
-			     (y2-interval (interval-of y2s))
+(defun plot-lines-two-sided (frame xs y1s y2s &key (x-interval (range xs))
+			     (y1-interval (range y1s))
+			     (y2-interval (range y2s))
 			     (x-title "x")
 			     (y1-title "y1")
 			     (y2-title "y2")
@@ -401,8 +401,8 @@ in a list."
     (list da1 da2)))
 
 (defun plot-symbols (frame xs ys &key
-                     (x-interval (interval-of xs))
-                     (y-interval (interval-of ys))
+                     (x-interval (range xs))
+                     (y-interval (range ys))
                      (x-title "x") (y-title "y")
                      (x-mapping-type 'linear-mapping)
                      (y-mapping-type 'linear-mapping)
@@ -436,7 +436,7 @@ in a list."
 		      (line-style *default-line-style*)
 		      (number-of-points 101)
 		      (ignorable-conditions '(division-by-zero)))
-  "Set up a plot and draw the function in the interval (interval-of ys
+  "Set up a plot and draw the function in the interval (range ys
 y-interval), ie NIL is ignored, points are incorporated, use
 FORCED-INTERVAL to force a particular interval.  For the intepretation
 of ignorable-conditions, see calculate-function."
@@ -444,7 +444,7 @@ of ignorable-conditions, see calculate-function."
   (multiple-value-bind (xs fxs)
       (calculate-function function x-interval number-of-points
 			  ignorable-conditions)
-    (let ((y-interval (interval-of fxs y-interval)))
+    (let ((y-interval (combined-range fxs y-interval)))
       ;; create plot
       (plot-lines frame xs fxs :x-interval x-interval :y-interval y-interval
 		  :x-title x-title :y-title y-title :x-mapping-type x-mapping-type
@@ -453,7 +453,7 @@ of ignorable-conditions, see calculate-function."
 
 (defun plot-sequence (frame sequence &key
 		      (x-interval (make-interval 0 (1- (length sequence))))
-		      (y-interval (interval-of sequence))
+		      (y-interval (range sequence))
 		      (x-title "N") (y-title "sequence")
 		      (x-mapping-type 'linear-mapping)
 		      (y-mapping-type 'linear-mapping)
@@ -463,7 +463,7 @@ of ignorable-conditions, see calculate-function."
   "Plot a sequence, ie values mapped to 0, 1, 2, ..."
   (let* ((vector (coerce sequence 'vector))
 	 (length (length vector)))
-    (plot-lines frame (num-sequence :from 0 :by 1 :length length) vector
+    (plot-lines frame (numseq 0 1 :length length) vector
 		:x-interval x-interval :y-interval y-interval
 		:x-title x-title :y-title y-title :x-mapping-type x-mapping-type
 		:y-mapping-type y-mapping-type :x-axis x-axis :y-axis y-axis
@@ -473,8 +473,7 @@ of ignorable-conditions, see calculate-function."
   "Create boundaries for rectangles in an image plot.  Boundaries are
 restricted to interval."
 ;  (declare ((array * (*)) x))		; !!! real
-  (let* ((lower (left interval))
-	 (upper (right interval))
+  (bind (((:interval lower upper) interval)
 	 (length (length x))
 	 (boundaries (make-array (1+ length) :element-type 'real)))
     (flet ((into-interval (v)
@@ -490,8 +489,8 @@ restricted to interval."
       boundaries))
 
 (defun plot-image (frame x y z &key (color-mapping #'make-hue-color-mapping)
-		   (x-interval (interval-of x))
-		   (y-interval (interval-of y))
+		   (x-interval (range x))
+		   (y-interval (range y))
 		   (x-title "x")
 		   (y-title "y")
 		   (z-title "z")
@@ -506,7 +505,7 @@ restricted to interval."
   (declare ((array * (* *)) z))		; !!! real
   ;; if color mapping is a function, use it to calculate color mapping
   (when (functionp color-mapping)
-    (setf color-mapping (funcall color-mapping (interval-of z))))
+    (setf color-mapping (funcall color-mapping (range z))))
   (clear frame)
   (with-slots (color-function) color-mapping
     (bind ((#(plot-frame legend-frame)
@@ -543,8 +542,8 @@ restricted to interval."
 
 
 (defun plot-histogram (frame histogram &key
-		       (x-interval (interval-of (slot-value histogram 'breaks)))
-		       (y-interval (interval-of (counts histogram) 0))
+		       (x-interval (range (slot-value histogram 'breaks)))
+		       (y-interval (combined-range (counts histogram) 0))
 		       (x-title "x") (y-title "count")
 		       (x-mapping-type 'linear-mapping)
 		       (y-mapping-type 'linear-mapping)
