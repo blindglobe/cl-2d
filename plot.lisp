@@ -101,8 +101,8 @@ there."
 	  (set-style line-style)
 	  (iter
 	    (with drawing-line-p := nil)
-	    (for x :in-vector xs)
-	    (for y :in-vector ys)
+	    (for x :in-vector (coerce xs 'vector))
+	    (for y :in-vector (coerce ys 'vector))
 	    (for x-d := (map-coordinate x-mapping x))
 	    (for y-d := (if y (map-coordinate y-mapping y) nil))
 	    (cond
@@ -185,6 +185,34 @@ given, 1 is used instead."
 		     (funcall size-function weight)
 		     (funcall color-function weight)))))
     (reset-clip))))
+
+;;;; auxiliary functions
+;;;;
+
+(defun calculate-function (function domain number-of-points
+			   ignorable-conditions)
+  "Calculate function at number-of-points points on domain.  If a
+member of ignorable-conditions is encountered, the condition is
+handled and the value is nil.  Return (values xs fxs)."
+  (assert (>= number-of-points 2))
+  (let ((xs (num-sequence :from (left domain)
+			  :to (right domain)
+			  :length number-of-points))
+	(fxs (make-array number-of-points))
+	(caught-condition-p nil))
+    (iter
+      (for i :from 0)
+      (for x :in-vector xs)
+      (for fx := (handler-case (funcall function x)
+		   (t (condition)
+		     (if (member condition ignorable-conditions
+				 :test (function typep))
+			 nil
+			 (error condition)))))
+      (setf (aref fxs i) fx)
+      (unless fx
+	(setf caught-condition-p t)))
+    (values xs fxs)))
 
 (defun draw-function (drawing-area function &key
 		      (x-interval (domain (x-mapping drawing-area)))
@@ -394,7 +422,8 @@ in a list."
 				   :y-axis y-axis)))
     (draw-symbols drawing-area xs ys :weights weights
                   :symbol-drawing-function symbol-drawing-function :size-function size-function
-                  :color-function color-function)))
+                  :color-function color-function)
+    drawing-area))
   
 (defun plot-function (frame function x-interval &key
 		      (y-interval nil)
