@@ -164,9 +164,6 @@ values.  Example: (modify-slots line-style :width 2 :color +red+."
 				:left 2.5 :top 19.5
 				:bottom 2.5 :right 10.5))
   "padding for image plots (in the image frame area")
-		 
-
-
 
 (defclass two-sided-plot-style (simple-plot-style)
   ((right-axis-size
