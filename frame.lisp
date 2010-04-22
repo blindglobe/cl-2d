@@ -58,7 +58,7 @@ background-color: ~a"
 		 :background-color background-color))
 
 
-(defmethod as-frame ((object xlib-image-context)
+(defmethod as-frame ((object gtk2-xlib-context)
                      &key (background-color +white+))
   (make-instance 'frame
 		 :horizontal-interval (make-interval 0 (width object))
