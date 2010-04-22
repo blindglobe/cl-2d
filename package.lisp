@@ -1,12 +1,12 @@
 (defpackage :cl-2d
-  (:use :common-lisp 
-	:cl-cairo2
-	:iterate 
-	:cl-colors 
-	:cl-utilities 
-	:bind
-	:cl-numlib
-        :xarray)
+    (:use :common-lisp 
+          :cl-cairo2
+          :iterate 
+          :cl-colors 
+          :cl-utilities 
+          :bind
+          :cl-numlib
+          :xarray)
   (:shadowing-import-from :iterate :collecting :collect)
   (:export
 
@@ -78,9 +78,10 @@
 
    draw-line draw-horizontal-line draw-vertical-line draw-lines
    draw-sequence draw-filled-rectangle draw-function draw-histogram
-   plot-simple plot-two-sided plot-lines plot-lines-two-sided
-   plot-symbols plot-function plot-sequence plot-image plot-histogram
-   draw-aligned-text draw-polygon draw-symbol draw-symbols
+   draw-categorical plot-simple plot-two-sided plot-lines
+   plot-lines-two-sided plot-symbols plot-function plot-sequence
+   plot-image plot-histogram plot-categorical draw-aligned-text
+   draw-polygon draw-symbol draw-symbols
    
    ))
 
