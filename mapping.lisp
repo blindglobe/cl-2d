@@ -55,7 +55,7 @@
 
 (defmethod initialize-instance :after ((coordinate-mapping linear-mapping)
 				       &key range snap-p)
-  (assert (and (typep range 'interval) (not (zero-interval-p range))))
+  (assert (and (typep range 'interval) (not (zero-interval? range))))
   (with-slots (domain conversion) coordinate-mapping
     (setf conversion
   	  (let* ((multiplier (/ (interval-diff range) (interval-diff domain)))
@@ -80,9 +80,9 @@
 
 (defmethod initialize-instance :after ((coordinate-mapping log-mapping)
 				       &key range snap-p)
-  (assert (and (typep range 'interval) (not (zero-interval-p range))))
+  (assert (and (typep range 'interval) (not (zero-interval? range))))
   (with-slots (domain conversion) coordinate-mapping
-    (assert (positive-interval-p domain))
+    (assert (positive-interval? domain))
     (setf conversion
   	  (let* ((log-left (log (interval-left domain)))
 		 (log-right (log (interval-right domain)))

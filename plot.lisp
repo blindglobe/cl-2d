@@ -197,7 +197,8 @@ handled and the value is nil.  Return (values xs fxs)."
   (assert (>= number-of-points 2))
   (let ((xs (numseq (interval-left domain)
                     (interval-right domain)
-                    :length number-of-points))
+                    :length number-of-points
+                    :type 'real))
 	(fxs (make-array number-of-points))
 	(caught-condition-p nil))
     (iter
@@ -237,7 +238,7 @@ whether vertical lines are drawn."
     (let* ((y-domain (domain (y-mapping drawing-area)))
 	   (y-min (interval-left y-domain))
 	   (last-index (1- (length counts))))
-      (assert (positive-interval-p y-domain))
+      (assert (positive-interval? y-domain))
       ;; plot histogram
       (with-sync-lock ((context drawing-area))
 	(with-clip-to-frame (drawing-area)
@@ -272,8 +273,7 @@ whether vertical lines are drawn."
 		    (y-mapping-type 'linear-mapping)
 		    (x-axis t)
 		    (y-axis t)
-		    (simple-plot-style *default-simple-plot-style*)
-		    #| (clear-frame-p t) |#)
+		    (simple-plot-style *default-simple-plot-style*))
   "Create an plot with an empty drawing-area of the given interval."
   (with-slots 
 	(frame-padding
@@ -291,14 +291,14 @@ whether vertical lines are drawn."
 				:x-mapping-type x-mapping-type
 				:y-mapping-type y-mapping-type)))
       (declare (ignore corner))
-;;; !!! I don't think I need clear-frame-p
-;;;      (when clear-frame-p
-	(clear frame) ;;;)
+      (clear frame)
       ;; draw axes
-      (left-axis left-axis-frame (y-mapping drawing-area) y-axis y-title
-      		 left-axis-style)
-      (bottom-axis bottom-axis-frame (x-mapping drawing-area) x-axis x-title
-      		   bottom-axis-style)
+      (when y-axis
+        (left-axis left-axis-frame (y-mapping drawing-area) y-axis y-title
+                   left-axis-style))
+      (when x-axis
+        (bottom-axis bottom-axis-frame (x-mapping drawing-area) x-axis x-title
+                     bottom-axis-style))
       ;; return drawing-area
       drawing-area)))
 
@@ -452,7 +452,8 @@ of ignorable-conditions, see calculate-function."
 		  :simple-plot-style simple-plot-style :line-style line-style))))
 
 (defun plot-sequence (frame sequence &key
-		      (x-interval (make-interval 0 (1- (length sequence))))
+                      (x (numseq 0 (1- (length sequence)) :type 'fixnum))
+		      (x-interval (range x))
 		      (y-interval (range sequence))
 		      (x-title "N") (y-title "sequence")
 		      (x-mapping-type 'linear-mapping)
@@ -461,9 +462,8 @@ of ignorable-conditions, see calculate-function."
 		      (simple-plot-style *default-simple-plot-style*)
 		      (line-style *default-line-style*))
   "Plot a sequence, ie values mapped to 0, 1, 2, ..."
-  (let* ((vector (coerce sequence 'vector))
-	 (length (length vector)))
-    (plot-lines frame (numseq 0 1 :length length) vector
+  (let* ((vector (coerce sequence 'vector)))
+    (plot-lines frame x vector
 		:x-interval x-interval :y-interval y-interval
 		:x-title x-title :y-title y-title :x-mapping-type x-mapping-type
 		:y-mapping-type y-mapping-type :x-axis x-axis :y-axis y-axis
@@ -501,8 +501,9 @@ restricted to interval."
 		   (plot-style *default-image-plot-style*)
 		   (image-legend-style *default-image-legend-style*)
 		   (legend-width 70))
-  (declare ((array * (*)) x y))		; !!! real
-  (declare ((array * (* *)) z))		; !!! real
+  (declare (optimize debug))
+  (declare (type (array * (*)) x y))
+  (declare (type (array * (* *)) z))
   ;; if color mapping is a function, use it to calculate color mapping
   (when (functionp color-mapping)
     (setf color-mapping (funcall color-mapping (range z))))
@@ -570,4 +571,70 @@ For the meaning of parameters, see draw-histogram."
 		      :vertical-lines-p vertical-lines-p :fill-color fill-color)
       ;; return drawing-area
       drawing-area)))
+
+(defun plot-columns (frame x ys styles
+                     &key (x-interval (range x))
+                     (y-interval (range ys))
+                     (x-title "")
+                     (y-title ""))
+  "Plot columns of a matrix."
+  (plot-rows frame x (transpose ys) styles
+             :x-interval x-interval :y-interval y-interval 
+             :x-title x-title :y-title y-title))
+
+(defun plot-rows (frame x ys styles
+                  &key (x-interval (range x))
+                  (y-interval (range ys))
+                  (x-title "")
+                  (y-title ""))
+  "Plot rows of a matrix YS, matching elements in rows to X.  Styles is either a
+sequence conforming to the number of rows, or an atom, which will be replicated
+accordingly."
+  (bind ((da (plot-simple frame x-interval y-interval
+                          :x-title x-title
+                          :y-title y-title))
+         ((nrow nil) (array-dimensions ys)))
+    (if (typep styles 'sequence)
+        (assert (= nrow (length styles)))
+        (setf styles (make-array nrow :initial-element styles)))
+    (iter
+      (for row :from 0 :below nrow)
+      (for y := (sub ys row t))
+      (for line-style :in-sequence styles)
+      (draw-lines da x y line-style))
+    da))
+
+(defun draw-errorbar (da quantiles y)
+  (bind ((#(a1 b1 c b2 a2) quantiles))
+    (draw-line da a1 y a2 y
+               (make-instance 'line-style :width 0.5))
+    (draw-line da b1 y b2 y
+               (make-instance 'line-style :width 1.5))
+    (symbol-filled-circle (map-coordinate (x-mapping da) c)
+                          (map-coordinate (y-mapping da) y)
+                          2.5 +black+ (context da))))
+
+(defun plot-errorbars (frame matrix names &key (x-interval (range matrix))
+                       (x-title "") (divx 50) (gap 20)
+                       vertical-line)
+  "Plot error bars, which are in matrix rows."
+  (clear frame)
+  (bind (((nrow ncol) (array-dimensions matrix))
+         (names (coerce names 'vector))
+         (#(nil right-frame) (split-frame-horizontally frame divx))
+         (da (plot-simple right-frame x-interval (make-interval 0 nrow)
+                          :x-title x-title :y-axis nil))
+         ((:accessors-r/o y-mapping context) da)
+         (left (- (interval-left (horizontal-interval da)) gap)))
+    (assert (= (length names) nrow))
+    (assert (= 5 ncol))
+    (iter
+      (for row :from 0 :below nrow)
+      (for name :in-vector names)
+      (draw-errorbar da (sub matrix row t) (1+ row))
+      (aligned-text left (map-coordinate y-mapping (1+ row))
+                    name :x-align 1
+                    :context context))
+    (when vertical-line
+      (draw-vertical-line da vertical-line +line-dot+))))
 

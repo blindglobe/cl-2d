@@ -73,7 +73,8 @@
    draw-categorical plot-simple plot-two-sided plot-lines
    plot-lines-two-sided plot-symbols plot-function plot-sequence
    plot-image plot-histogram plot-categorical draw-aligned-text
-   draw-polygon draw-symbol draw-symbols
+   draw-polygon draw-symbol draw-symbols plot-rows plot-columns
+   draw-errorbar plot-errorbars
    
    ))
 

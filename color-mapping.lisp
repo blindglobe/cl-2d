@@ -20,7 +20,7 @@ numbers in domain to colors.  Used for plotting image maps."))
 domain into this gradient.  positivep gives the direction on the color
 wheel.  If (= lower upper), uses lower-color for all colors.  The
 function maps nil to nil-color.  Gamma specifies gamma correction."
-  (if (zero-interval-p domain)
+  (if (zero-interval? domain)
 	(make-instance 'color-mapping
 		       :domain domain
 		       :color-function (constantly lower-color))
@@ -77,7 +77,7 @@ white), mapping the domain into this gradient.  If (= lower upper),
 uses lower-v for all colors.  Gamma specifies gamma correction."
   (flet ((gray (v)
 	   (make-instance 'rgb :red v :green v :blue v)))
-    (if (zero-interval-p domain)
+    (if (zero-interval? domain)
 	(make-instance 'color-mapping
 		       :domain domain
 		       :color-function (constantly (gray lower-v)))

@@ -45,7 +45,7 @@
             (split-frame-horizontally internal-frame width (spacer)))
            ((:slots domain color-function) color-mapping)
            ((:interval lower upper) domain))
-      (if (zero-interval-p domain)
+      (if (zero-interval? domain)
           ;; homogenous rectangle for denegerate 
           (fill-with-color gradient-frame
                            (funcall color-function lower))

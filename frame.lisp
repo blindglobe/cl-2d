@@ -26,8 +26,8 @@
 
 (defmethod initialize-instance :after ((frame frame) &key)
   (with-slots (horizontal-interval vertical-interval) frame
-    (assert (and (weakly-positive-interval-p horizontal-interval)
-		 (weakly-negative-interval-p vertical-interval)))))
+    (assert (and (weakly-positive-interval? horizontal-interval)
+		 (weakly-negative-interval? vertical-interval)))))
 
 (defmethod print-object ((obj frame) stream)
   "Print a frame object."
@@ -57,6 +57,14 @@ background-color: ~a"
 		 :context object
 		 :background-color background-color))
 
+(defmethod as-frame ((object xlib-image-context) &key (background-color +white+))
+  (make-instance 'frame
+		 :horizontal-interval (make-interval 0 (width object))
+		 :vertical-interval (make-interval (height object) 0)
+		 :context object
+		 :background-color (and background-color 
+                                        (slot-value object 
+                                                    'cl-cairo2::background-color))))
 
 (defmethod as-frame ((object gtk2-xlib-context)
                      &key (background-color +white+))
@@ -134,7 +142,7 @@ accommodating lines with the given width."
       (with-context (context)
 	(reset-clip)
 	(rectangle (- (interval-left horizontal-interval) half-width)
-		   (- (interval-left vertical-interval) half-width)
+		   (- (interval-right vertical-interval) half-width)
 		   (+ line-width (interval-width horizontal-interval))
 		   (+ line-width (interval-width vertical-interval)))
 	(clip)))))

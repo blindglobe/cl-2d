@@ -307,7 +307,7 @@ digits after the decimal dot.  If digits <= 0, there is no decimal dot."
 				    (0 1)
 				    (1 2)
 				    (2 5))))
-	 (positive-p (positive-interval-p domain))
+	 (positive-p (positive-interval? domain))
 	 (reverse-p (if positive-p	; (xor positive-p include-domain-p)
 			(not include-domain-p)
 			include-domain-p))
