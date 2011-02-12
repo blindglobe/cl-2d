@@ -58,17 +58,18 @@ The path is closed at the end.  No sanity checks are performed."
 (defun draw-line (drawing-area x-start y-start x-end y-end
 		  &optional (line-style *default-line-style*))
   "Draw a line segment between the given coordinates."
-  (with-clip-to-frame (drawing-area (width line-style))
-    (with-slots (context x-mapping y-mapping) drawing-area
-      (with-context (context)
-	(with-sync-lock (context)
-	  (set-style line-style)
-	  (move-to (map-coordinate x-mapping x-start)
-		   (map-coordinate y-mapping y-start))
-	  (line-to (map-coordinate x-mapping x-end)
-		   (map-coordinate y-mapping y-end))
-	  (stroke))))
-    (values)))
+  (when line-style
+    (with-clip-to-frame (drawing-area (width line-style))
+      (with-slots (context x-mapping y-mapping) drawing-area
+        (with-context (context)
+          (with-sync-lock (context)
+            (set-style line-style)
+            (move-to (map-coordinate x-mapping x-start)
+                     (map-coordinate y-mapping y-start))
+            (line-to (map-coordinate x-mapping x-end)
+                     (map-coordinate y-mapping y-end))
+            (stroke))))
+      (values))))
 
 (defun draw-horizontal-line (drawing-area y &optional 
 			     (line-style *default-line-style*))
@@ -89,6 +90,16 @@ drawing area."
 	       x (interval-right y-interval)
 	       line-style))
   (values))
+
+(defun draw-regression-line (da intercept slope &optional
+                             (line-style *default-line-style*))
+  "Draw a line with given intercept and slope."
+  (bind (((:interval left right) (x-domain da)))
+    (with-clip-to-frame (da)
+      (draw-line da 
+                 left (+ intercept (* slope left))
+                 right (+ intercept (* slope right))
+                 line-style))))
 
 (defun draw-lines (drawing-area xs ys &optional (line-style *default-line-style*))
   "Connect the (x,y) coordinates with lines in the order they occur.
@@ -128,9 +139,10 @@ there."
   (draw-lines drawing-area (numseq 0 1 :length length) vector
 	      line-style)))
 
-(defun draw-filled-rectangle (drawing-area x1 y1 x2 y2 fill-color 
-			      &optional (snap-mode :none))
-  "Draw a rectangle with the given fill color and coordinates."
+(defun draw-rectangle (drawing-area x1 y1 x2 y2 
+                       &key fill-color line-style (snap-mode :none))
+  "Draw a rectangle with the given fill color, line style (either can be nil)
+and coordinates."
   (with-slots (context x-mapping y-mapping) drawing-area
     (with-context (context)
       (let ((x1 (map-coordinate x-mapping x1 snap-mode))
@@ -142,33 +154,53 @@ there."
 	(line-to x2 y2)
 	(line-to x2 y1)
 	(close-path)
-	(set-source-color fill-color)
-	(fill-path)))
+        (when fill-color
+          (set-source-color fill-color)
+          (fill-path))
+        (when line-style
+          (set-style line-style)
+          (stroke))))
     (values)))
 
-(defun draw-symbol (drawing-area x y size color symbol-drawing-function)
-  "Draw a symbol (using given symbol-drawing-function) at (x,y), with
-given size and color."
+(defun draw-circle (drawing-area x y radius
+                       &key fill-color line-style (snap-mode :none))
+  "Draw a circle with the given fill color, line style (either can be nil),
+coordinates and radius."
+  (unless (or fill-color line-style)
+    (return-from draw-circle (values)))
+  (with-slots (context x-mapping y-mapping) drawing-area
+    (with-context (context)
+      (let ((x (map-coordinate x-mapping x snap-mode))
+	    (y (map-coordinate y-mapping y snap-mode)))
+        (circle-path x y radius)
+        (when fill-color
+          (set-source-color fill-color)
+          (fill-path))
+        (when line-style
+          (set-style line-style)
+          (stroke))))
+    (values)))
+
+
+(defun draw-symbol (drawing-area x y symbol-drawing-function &rest parameters)
+  "Draw a symbol (using given symbol-drawing-function) at (x,y), with given parameters."
   (clip-to-frame drawing-area)
   (with-slots (x-mapping y-mapping context) drawing-area
     (with-context (context)
       (with-sync-lock (context)
-	(funcall symbol-drawing-function
-		 (map-coordinate x-mapping x)
-		 (map-coordinate y-mapping y)
-		 size 
-		 color))
+	(apply symbol-drawing-function
+               (map-coordinate x-mapping x)
+               (map-coordinate y-mapping y)
+               parameters))
       (reset-clip))))
 
 (defun draw-symbols (drawing-area xs ys &key
-		    (weights nil)
-		    (symbol-drawing-function #'symbol-hollow-circle)
-		    (size-function (proportional-size 4))
-		    (color-function (constantly +black+)))
+                     (symbol-drawing-function #'symbol-hollow-circle)
+                     (size 4) (color +black+) (label ""))
   "Draw points in a given drawing-area, using the given (x,y)
 coordinate pairs and optional weights.  The symbols are drawn using
 the symbol-drawing-function, with size and color calculated from the
-weight using size-function and color-function.  If weights are not
+weight using size and color.  If weights are not
 given, 1 is used instead."
   (assert (= (length xs) (length ys)))
   (clip-to-frame drawing-area)
@@ -176,14 +208,16 @@ given, 1 is used instead."
     (with-context (context)
       (with-sync-lock (context)
 	(dotimes (i (length xs))
-	  (let ((weight (if weights
-			    (aref weights i)
-			    1)))
+	  (bind (((:flet pick (argument))
+                  (if (vectorp argument)
+                      (aref argument i)
+                      argument)))
 	    (funcall symbol-drawing-function
-		     (map-coordinate x-mapping (aref xs i))
-		     (map-coordinate y-mapping (aref ys i))
-		     (funcall size-function weight)
-		     (funcall color-function weight)))))
+                     (map-coordinate x-mapping (aref xs i))
+                     (map-coordinate y-mapping (aref ys i))
+                     :size (pick size)
+                     :color (pick color)
+                     :label (pick label)))))
     (reset-clip))))
 
 ;;;; auxiliary functions
@@ -249,7 +283,8 @@ whether vertical lines are drawn."
 		  (right (aref breaks (1+ i))))
 	      ;; fill rectangle with color if fill-color is given
 	      (when fill-color
-		(draw-filled-rectangle drawing-area left 0 right count fill-color))
+		(draw-rectangle drawing-area left 0 right count
+                                :fill-color fill-color))
 	      ;; draw lines if line-style is given
 	      (when line-style
 		(draw-line drawing-area left count right count line-style)
@@ -409,10 +444,10 @@ in a list."
                      (x-axis t)
                      (y-axis t)
                      (simple-plot-style *default-simple-plot-style*)
-                     (weights nil)
                      (symbol-drawing-function #'symbol-hollow-circle)
-                     (size-function (proportional-size 4))
-                     (color-function (constantly +black+)))
+                     (size 10)
+                     (color +black+)
+                     label)
   (let ((drawing-area (plot-simple frame x-interval y-interval
 				   :x-title x-title 
 				   :y-title y-title
@@ -420,9 +455,9 @@ in a list."
 				   :x-mapping-type x-mapping-type
 				   :y-mapping-type y-mapping-type :x-axis x-axis
 				   :y-axis y-axis)))
-    (draw-symbols drawing-area xs ys :weights weights
-                  :symbol-drawing-function symbol-drawing-function :size-function size-function
-                  :color-function color-function)
+    (draw-symbols drawing-area xs ys
+                  :symbol-drawing-function symbol-drawing-function
+                  :size size :color color :label label)
     drawing-area))
   
 (defun plot-function (frame function x-interval &key
@@ -604,15 +639,26 @@ accordingly."
       (draw-lines da x y line-style))
     da))
 
-(defun draw-errorbar (da quantiles y)
-  (bind ((#(a1 b1 c b2 a2) quantiles))
-    (draw-line da a1 y a2 y
-               (make-instance 'line-style :width 0.5))
-    (draw-line da b1 y b2 y
-               (make-instance 'line-style :width 1.5))
-    (symbol-filled-circle (map-coordinate (x-mapping da) c)
-                          (map-coordinate (y-mapping da) y)
-                          2.5 +black+ (context da))))
+(defun draw-errorbar (da x y &optional (errorbar-style *default-errorbar-style*))
+  "Draw an error bar.  One coordinate is a number, the other should be a vector
+of five numbers, which will be drawn as quantiles."
+  (bind (((:slots x-mapping y-mapping) da)
+         ((:slots thin-line thick-line circle-color circle-size) errorbar-style))
+    (cond
+      ((and (numberp x) (typep y '(vector * 5)))
+       (bind ((#(a1 b1 c b2 a2) y))
+         (draw-line da x a1 x b1 thin-line)
+         (draw-line da x b1 x b2 thick-line)
+         (draw-line da x b2 x a2 thin-line)
+         (draw-circle da x c circle-size :fill-color circle-color)))
+      ((and (typep x '(vector * 5)) (numberp y))
+       (bind ((#(a1 b1 c b2 a2) x))
+         (draw-line da a1 y b1 y thin-line)
+         (draw-line da b1 y b2 y thick-line)
+         (draw-line da b2 y a2 y thin-line)
+         (draw-circle da c y circle-size :fill-color circle-color)))
+      (t (error "~A and ~A are not recognized as a coordinate and quantile ~
+      specification in either order." x y)))))
 
 (defun plot-errorbars (frame matrix names &key (x-interval (range matrix))
                        (x-title "") (divx 50) (gap 20)

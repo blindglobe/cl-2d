@@ -38,3 +38,11 @@ conditional on whether the context is pixel based."
                                                  :domain y-interval
                                                  :range v-int
                                                  :snap-p snap-p))))))
+
+(defun x-domain (drawing-area)
+  "Return the X domain of a drawing area."
+  (domain (x-mapping drawing-area)))
+
+(defun y-domain (drawing-area)
+  "Return the y domain of a drawing area."
+  (domain (y-mapping drawing-area)))

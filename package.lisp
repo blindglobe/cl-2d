@@ -8,6 +8,7 @@
           :cl-num-utils
           :xarray)
   (:shadowing-import-from :iterate :collecting :collect)
+  (:shadowing-import-from :cl-num-utils :convex-combination) ; also in cl-colors
   (:export
 
    ;; utilities
@@ -23,9 +24,9 @@
 
    ;; frame
 
-   frame context background-color width height as-frame padding
-   pad-frame split-frame split-frame-vertically
-   split-frame-horizontally fill-with-color clear
+   frame horizontal-interval vertical-interval context background-color
+   width height as-frame padding pad-frame split-frame split-frame-vertically
+   split-frame-horizontally with-clip-to-frame fill-with-color clear
 
    ;; mapping
 
@@ -34,7 +35,7 @@
 
    ;; drawing-area
    
-   drawing-area x-mapping y-mapping setup-drawing-area
+   drawing-area x-mapping y-mapping setup-drawing-area x-domain y-domain
 
    ;; styles
 
@@ -46,7 +47,8 @@
    *default-line-style* *default-left-axis-style* *default-right-axis-style*
    *default-horizontal-axis-style* *default-simple-plot-style*
    *default-image-plot-style* *default-image-legend-style*
-   *default-two-sided-plot-style* set-style
+   *default-two-sided-plot-style* errorbar-style *default-errorbar-style* 
+   set-style
    
    ;; axis
 
@@ -64,13 +66,13 @@
    ;; symbols
 
    symbol-filled-circle symbol-filled-square symbol-hollow-circle
-   symbol-hollow-square proportional-size
+   symbol-hollow-square symbol-label
    
    ;; plot
 
-   draw-line draw-horizontal-line draw-vertical-line draw-lines
-   draw-sequence draw-filled-rectangle draw-function draw-histogram
-   draw-categorical plot-simple plot-two-sided plot-lines
+   draw-line draw-regression-line draw-horizontal-line draw-vertical-line
+   draw-lines draw-sequence draw-circle draw-rectangle draw-function
+   draw-histogram draw-categorical plot-simple plot-two-sided plot-lines
    plot-lines-two-sided plot-symbols plot-function plot-sequence
    plot-image plot-histogram plot-categorical draw-aligned-text
    draw-polygon draw-symbol draw-symbols plot-rows plot-columns

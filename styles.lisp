@@ -188,6 +188,18 @@ values.  Example: (modify-slots line-style :width 2 :color +red+."
 (defparameter *default-horizontal-legend-style* 
   (make-instance 'horizontal-legend-style))
 
+(defclass errorbar-style ()
+  ((thin-line :accessor thin-line :initarg :thin-line
+              :initform (make-instance 'line-style :width 0.5))
+   (thick-line :accessor thick-line :initarg :thick-line
+               :initform nil)
+   (circle-color :accessor circle-color :initarg :circle-color
+                 :initform +black+)
+   (circle-size :accessor circle-size :initarg :circle-radius
+                  :initform 2.5)))
+
+(defparameter *default-errorbar-style* (make-instance 'errorbar-style))
+
 (defgeneric set-style (style &optional context))
 
 (defmethod set-style ((style font-style) &optional (context *context*))

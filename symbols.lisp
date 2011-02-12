@@ -10,12 +10,14 @@
 ;;;;  of an edge othe square that would contain the symbol, which is
 ;;;;  drawn with color in context.
 
-(defun symbol-filled-circle (x y size color &optional (context *context*))
+(defun symbol-filled-circle (x y &key size color (context *context*)
+                             &allow-other-keys)
   "Filled circle symbol."
   (let ((radius (/ size 2)))
     (filled-circle x y radius color context)))
 
-(defun symbol-filled-square (x y size color &optional (context *context*))
+(defun symbol-filled-square (x y &key size color (context *context*)
+                             &allow-other-keys)
   "Filled square symbol."
   (let ((halfsize (/ size 2)))
     (with-context (context)
@@ -23,7 +25,8 @@
       (set-source-color color)
       (fill-path))))
   
-(defun symbol-hollow-circle (x y size color &optional (context *context*))
+(defun symbol-hollow-circle (x y &key size color (context *context*)
+                             &allow-other-keys)
   "Hollow circle symbol."
   (let ((radius (/ size 2)))
     (with-context (context)
@@ -31,7 +34,8 @@
       (set-source-color color)
       (stroke))))
 
-(defun symbol-hollow-square (x y size color &optional (context *context*))
+(defun symbol-hollow-square (x y &key size color (context *context*)
+                             &allow-other-keys)
   "Hollow square symbol."
   (let ((halfsize (/ size 2)))
     (with-context (context)
@@ -39,13 +43,10 @@
       (set-source-color color)
       (stroke))))
 
-;;;;
-;;;;  functions that assign a size or a color to a particular weight
-;;;;
-;;;;  All of them take one argument and return an appropriate color or
-;;;;  size.
-
-(defun proportional-size (x)
-  "Return a function that multiplies x by the square root of its argument."
-  (lambda (s)
-    (* x (sqrt s))))
+(defun symbol-label (x y &key size color label (context *context*)
+                     &allow-other-keys)
+  "Text, with given size."
+  (with-context (context)
+    (set-source-color color)
+    (set-font-size size)
+    (aligned-text x y label)))
