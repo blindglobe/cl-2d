@@ -9,6 +9,7 @@
           :xarray)
   (:shadowing-import-from :iterate :collecting :collect)
   (:shadowing-import-from :cl-num-utils :convex-combination) ; also in cl-colors
+  (:shadowing-import-from :cl-cairo2 :mask) ; also in cl-num-utils
   (:export
 
    ;; utilities
