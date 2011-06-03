@@ -44,14 +44,14 @@
 	   (#(gradient-frame axis-frame) 
             (split-frame-horizontally internal-frame width (spacer)))
            ((:slots domain color-function) color-mapping)
-           ((:interval lower upper) domain))
+           ((:structure interval- lower upper) domain))
       (if (zero-interval? domain)
           ;; homogenous rectangle for denegerate 
           (fill-with-color gradient-frame
                            (funcall color-function lower))
           (bind (((:slots-r/o horizontal-interval vertical-interval context)
                   gradient-frame)
-                 ((:interval left-edge right-edge) horizontal-interval))
+                 ((:structure interval- left-edge right-edge) horizontal-interval))
             (with-sync-lock (context)
               (let ((mapping (make-instance 'linear-mapping
                                             :domain domain

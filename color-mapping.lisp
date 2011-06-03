@@ -24,7 +24,7 @@ function maps nil to nil-color.  Gamma specifies gamma correction."
 	(make-instance 'color-mapping
 		       :domain domain
 		       :color-function (constantly lower-color))
-      (bind (((:interval lower upper) domain)
+      (bind (((:structure interval- lower upper) domain)
              (lower-hsv (->hsv lower-color))
              (upper-hsv (->hsv upper-color))
              (difference (- upper lower)))
@@ -81,7 +81,7 @@ uses lower-v for all colors.  Gamma specifies gamma correction."
 	(make-instance 'color-mapping
 		       :domain domain
 		       :color-function (constantly (gray lower-v)))
-	(bind (((:interval lower upper) domain)
+	(bind (((:structure interval- lower upper) domain)
 	       (difference (- upper lower)))
 	  (make-instance 'color-mapping
 			 :domain domain

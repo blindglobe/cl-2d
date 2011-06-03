@@ -99,7 +99,7 @@ context.  Extent is :width or :height."
   ;; if the domain is very narrow, just return a single mark
   (bind (((:accessors-r/o domain) mapping)
          (width (interval-width domain))
-         ((:interval left right) domain))
+         ((:structure interval- left right) domain))
     (when (or (zerop width) (<= (/ width
                                    (max (abs left) (abs right)))
                                 1e-10)) ; !!! ? cf relative precision

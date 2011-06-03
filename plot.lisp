@@ -94,7 +94,7 @@ drawing area."
 (defun draw-regression-line (da intercept slope &optional
                              (line-style *default-line-style*))
   "Draw a line with given intercept and slope."
-  (bind (((:interval left right) (x-domain da)))
+  (bind (((:structure interval- left right) (x-domain da)))
     (with-clip-to-frame (da)
       (draw-line da 
                  left (+ intercept (* slope left))
@@ -508,7 +508,7 @@ of ignorable-conditions, see calculate-function."
   "Create boundaries for rectangles in an image plot.  Boundaries are
 restricted to interval."
 ;  (declare ((array * (*)) x))		; !!! real
-  (bind (((:interval lower upper) interval)
+  (bind (((:structure interval- lower upper) interval)
 	 (length (length x))
 	 (boundaries (make-array (1+ length) :element-type 'real)))
     (flet ((into-interval (v)
