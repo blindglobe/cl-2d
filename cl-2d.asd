@@ -24,7 +24,7 @@
   :depends-on (:cl-cairo2
 	       :iterate
 	       :cl-colors
-	       :cl-utilities
+	       :alexandria
 	       :metabang-bind
 	       :cl-num-utils
                :xarray))

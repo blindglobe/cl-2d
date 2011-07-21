@@ -3,13 +3,12 @@
           :cl-cairo2
           :iterate 
           :cl-colors 
-          :cl-utilities 
+          :alexandria
           :bind
           :cl-num-utils
           :xarray)
-  (:shadowing-import-from :iterate :collecting :collect)
-  (:shadowing-import-from :cl-num-utils :convex-combination) ; also in cl-colors
-  (:shadowing-import-from :cl-cairo2 :mask) ; also in cl-num-utils
+  (:shadowing-import-from cl-num-utils mean variance convex-combination) ; also in cl-colors
+  (:shadowing-import-from cl-cairo2 mask rotate) ; also in cl-num-utils
   (:export
 
    ;; utilities
