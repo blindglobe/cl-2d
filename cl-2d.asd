@@ -20,7 +20,8 @@
 	       (:file "color-mapping")
 	       (:file "legend")
 	       (:file "symbols")
-	       (:file "plot"))
+	       (:file "plot")
+               (:file "extensions"))
   :depends-on (:cl-cairo2
 	       :iterate
 	       :cl-colors

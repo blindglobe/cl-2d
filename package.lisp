@@ -78,5 +78,9 @@
    draw-polygon draw-symbol draw-symbols plot-rows plot-columns
    draw-errorbar plot-errorbars
    
+   ;; extensions
+
+   *pdf-frame-dimensions* with-pdf-frame
+   
    ))
 
