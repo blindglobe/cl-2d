@@ -52,15 +52,15 @@ background-color: ~a"
 
 (defmethod as-frame ((object context) &key (background-color nil))
   (make-instance 'frame
-		 :horizontal-interval (make-interval 0 (width object))
-		 :vertical-interval (make-interval (height object) 0)
+		 :horizontal-interval (interval 0 (width object))
+		 :vertical-interval (interval (height object) 0)
 		 :context object
 		 :background-color background-color))
 
 (defmethod as-frame ((object xlib-image-context) &key (background-color +white+))
   (make-instance 'frame
-		 :horizontal-interval (make-interval 0 (width object))
-		 :vertical-interval (make-interval (height object) 0)
+		 :horizontal-interval (interval 0 (width object))
+		 :vertical-interval (interval (height object) 0)
 		 :context object
 		 :background-color (and background-color 
                                         (slot-value object 
@@ -69,8 +69,8 @@ background-color: ~a"
 (defmethod as-frame ((object gtk2-xlib-context)
                      &key (background-color +white+))
   (make-instance 'frame
-		 :horizontal-interval (make-interval 0 (width object))
-		 :vertical-interval (make-interval (height object) 0)
+		 :horizontal-interval (interval 0 (width object))
+		 :vertical-interval (interval (height object) 0)
 		 :context object
 		 :background-color background-color))
 

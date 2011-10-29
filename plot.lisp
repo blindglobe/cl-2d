@@ -479,7 +479,7 @@ of ignorable-conditions, see calculate-function."
   (multiple-value-bind (xs fxs)
       (calculate-function function x-interval number-of-points
 			  ignorable-conditions)
-    (let ((y-interval (combined-range fxs y-interval)))
+    (let ((y-interval (limits (list fxs y-interval))))
       ;; create plot
       (plot-lines frame xs fxs :x-interval x-interval :y-interval y-interval
 		  :x-title x-title :y-title y-title :x-mapping-type x-mapping-type
@@ -508,11 +508,11 @@ of ignorable-conditions, see calculate-function."
   "Create boundaries for rectangles in an image plot.  Boundaries are
 restricted to interval."
 ;  (declare ((array * (*)) x))		; !!! real
-  (bind (((:structure interval- lower upper) interval)
+  (bind (((:structure interval- left right) interval)
 	 (length (length x))
 	 (boundaries (make-array (1+ length) :element-type 'real)))
     (flet ((into-interval (v)
-	     (min upper (max lower v))))
+	     (min right (max left v))))
       (setf (aref boundaries 0) (funcall conv (into-interval (aref x 0))))
       (iter
 	(for i from 1 below length)
@@ -579,7 +579,7 @@ restricted to interval."
 
 (defun plot-histogram (frame histogram &key
 		       (x-interval (range (slot-value histogram 'breaks)))
-		       (y-interval (combined-range (counts histogram) 0))
+		       (y-interval (limits (list (counts histogram) 0)))
 		       (x-title "x") (y-title "count")
 		       (x-mapping-type 'linear-mapping)
 		       (y-mapping-type 'linear-mapping)
@@ -668,7 +668,7 @@ of five numbers, which will be drawn as quantiles."
   (bind (((nrow ncol) (array-dimensions matrix))
          (names (coerce names 'vector))
          (#(nil right-frame) (split-frame-horizontally frame divx))
-         (da (plot-simple right-frame x-interval (make-interval 0 nrow)
+         (da (plot-simple right-frame x-interval (interval 0 nrow)
                           :x-title x-title :y-axis nil))
          ((:accessors-r/o y-mapping context) da)
          (left (- (interval-left (horizontal-interval da)) gap)))

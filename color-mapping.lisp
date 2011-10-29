@@ -24,17 +24,17 @@ function maps nil to nil-color.  Gamma specifies gamma correction."
 	(make-instance 'color-mapping
 		       :domain domain
 		       :color-function (constantly lower-color))
-      (bind (((:structure interval- lower upper) domain)
+      (bind (((:structure interval- left right) domain)
              (lower-hsv (->hsv lower-color))
              (upper-hsv (->hsv upper-color))
-             (difference (- upper lower)))
+             (difference (- right left)))
         (make-instance 'color-mapping
                        :domain domain
                        :color-function #'(lambda (x)
                                            (if x
                                                (hsv-combination 
                                                 lower-hsv upper-hsv 
-                                                (let ((r (/ (- x lower)
+                                                (let ((r (/ (- x left)
                                                             difference)))
                                                   (if (= gamma 1)
 							r
@@ -48,7 +48,7 @@ function maps nil to nil-color.  Gamma specifies gamma correction."
 nil-color for nil values."
   (assert (plusp abs-max))
   (make-instance 'color-mapping
-		 :domain (make-interval (- abs-max) abs-max)
+		 :domain (interval (- abs-max) abs-max)
 		 :color-function 
 		 (let ((lower-hsv (->hsv +blue+))
 		       (zero-hsv (->hsv +green+))
@@ -81,12 +81,12 @@ uses lower-v for all colors.  Gamma specifies gamma correction."
 	(make-instance 'color-mapping
 		       :domain domain
 		       :color-function (constantly (gray lower-v)))
-	(bind (((:structure interval- lower upper) domain)
-	       (difference (- upper lower)))
+	(bind (((:structure interval- left right) domain)
+	       (difference (- right left)))
 	  (make-instance 'color-mapping
 			 :domain domain
 			 :color-function #'(lambda (x)
-					     (let* ((r (/ (- x lower)
+					     (let* ((r (/ (- x left)
 							  difference))
 						    (r-gamma 
 						     (if (= gamma 1)

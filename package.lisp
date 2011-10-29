@@ -7,7 +7,7 @@
           :bind
           :cl-num-utils
           :xarray)
-  (:shadowing-import-from cl-num-utils mean variance convex-combination) ; also in cl-colors
+  (:shadowing-import-from cl-num-utils mean variance convex-combination median) ; also in cl-colors
   (:shadowing-import-from cl-cairo2 mask rotate) ; also in cl-num-utils
   (:export
 

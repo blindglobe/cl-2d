@@ -21,8 +21,8 @@
 (defmethod range ((mapping coordinate-mapping))
   "Return range of the mapping as an interval."
   (with-slots (domain conversion) mapping
-    (make-interval (funcall conversion (interval-left domain))
-                   (funcall conversion (interval-right domain)))))
+    (interval (funcall conversion (interval-left domain))
+              (funcall conversion (interval-right domain)))))
 
 +
 
