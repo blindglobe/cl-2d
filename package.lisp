@@ -1,13 +1,14 @@
 (defpackage :cl-2d
-    (:use :common-lisp 
+    (:use :common-lisp
           :cl-cairo2
-          :iterate 
-          :cl-colors 
+          :iterate
+          :cl-colors
           :alexandria
           :bind
           :cl-num-utils
           :xarray)
-  (:shadowing-import-from cl-num-utils mean variance convex-combination median) ; also in cl-colors
+  (:shadowing-import-from cl-num-utils mean variance convex-combination median
+                          displace-array) ; also in cl-colors, alexandria
   (:shadowing-import-from cl-cairo2 mask rotate) ; also in cl-num-utils
   (:export
 
@@ -15,11 +16,11 @@
 
    snap snap* segment filled-rectangle circle-path filled-circle
    text-with-extents text x-bearing y-bearing x-advance y-advance
-   add-text-extents measure-labels capital-letter-height aligned-text 
+   add-text-extents measure-labels capital-letter-height aligned-text
    aligned-text-rectangle
 
    ;; contexts
-   
+
    xlib-image-context-to-png png-context create-png-context
 
    ;; frame
@@ -30,11 +31,11 @@
 
    ;; mapping
 
-   coordinate-mapping domain conversion map-coordinate range 
+   coordinate-mapping domain conversion map-coordinate range
    linear-mapping contant-mapping log-mapping
 
    ;; drawing-area
-   
+
    drawing-area x-mapping y-mapping setup-drawing-area x-domain y-domain
 
    ;; styles
@@ -47,27 +48,27 @@
    *default-line-style* *default-left-axis-style* *default-right-axis-style*
    *default-horizontal-axis-style* *default-simple-plot-style*
    *default-image-plot-style* *default-image-legend-style*
-   *default-two-sided-plot-style* errorbar-style *default-errorbar-style* 
+   *default-two-sided-plot-style* errorbar-style *default-errorbar-style*
    set-style
-   
+
    ;; axis
 
    axis standard-axis left-axis top-axis right-axis bottom-axis
 
    ;; color-mapping
-   
+
    color-mapping make-hue-color-mapping make-sign-color-mapping
    make-monochrome-mapping
- 
+
    ;; legend
-   
+
    horizontal-legend image-legend
 
    ;; symbols
 
    symbol-filled-circle symbol-filled-square symbol-hollow-circle
    symbol-hollow-square symbol-label
-   
+
    ;; plot
 
    draw-line draw-regression-line draw-horizontal-line draw-vertical-line
@@ -77,10 +78,9 @@
    plot-image plot-histogram plot-categorical draw-aligned-text
    draw-polygon draw-symbol draw-symbols plot-rows plot-columns
    draw-errorbar plot-errorbars
-   
+
    ;; extensions
 
    *pdf-frame-dimensions* with-pdf-frame
-   
-   ))
 
+   ))
